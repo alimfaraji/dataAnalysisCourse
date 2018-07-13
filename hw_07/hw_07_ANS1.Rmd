@@ -1,0 +1,247 @@
+---
+title: "Seventh Week: Generalized Linear Models"
+subtitle: "Murder or suicide"
+author: "93100909"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/giraffe-suicide-fail-cartoon.jpg"  align = 'center'>
+</div>
+
+ <p dir="LTR"> 
+```{r}
+knitr::opts_chunk$set(echo = TRUE,comment = "",error = F,message = F,
+                      warning = F,fig.width = 10,fig.height = 6,fig.align = "center")
+library(readr)
+library(ggplot2)
+library(highcharter)
+library(ggthemes)
+library(heuristica)
+library(readxl)
+library(dplyr)
+library(caret)
+source("unbalanced_functions.R")
+death = read.csv("data\\murder_suicide.csv")
+#colnames(death)
+imp_vars = c("Id", "ResidentStatus" , "Sex",  "Age", "DayOfWeekOfDeath", "MannerOfDeath" ,"MethodOfDisposition", "Education2003Revision", "Autopsy" ,"PlaceOfInjury", "RaceRecode5")
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+1.
+```{r}
+death_imp_vars <- death %>% select(c(imp_vars))
+death_imp_vars[,"MannerOfDeath"] = death_imp_vars[,"MannerOfDeath"] - 2
+#head(death_imp_vars, 5)
+cor_death <- cor(death_imp_vars[sapply(death_imp_vars, is.numeric)], use = "complete.obs")
+print(cor_death)
+#View(cor_death)
+pairs(death_imp_vars, gap = 0, pch = ".")
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+2.
+```{r}
+Ys = death_imp_vars[,"MannerOfDeath"]
+Sexs = death_imp_vars[,"Sex"]
+Ages = death_imp_vars[,"Age"]
+Residents = death_imp_vars[,"ResidentStatus"]
+DayOfWeekOfDeaths = death_imp_vars[,"DayOfWeekOfDeath"]
+MethodOfDisposition = death_imp_vars[,"MethodOfDisposition"]
+Education2003Revision = death_imp_vars[,"Education2003Revision"]
+Autopsy = death_imp_vars[,"Autopsy"]
+PlaceOfInjury = death_imp_vars[,"PlaceOfInjury"]
+RaceRecode5 = death_imp_vars[,"RaceRecode5"]
+#death_imp_vars %>% mutate(sexNum = ifelse(Sex == "M", 0, 1)) %>% select(MannerOfDeath, sexNum) -> data2
+#death_imp_vars %>% mutate(disposNum = ifelse(MethodOfDisposition == "B", 0, ifelse(MethodOfDisposition == "C", 1, ifelse(MethodOfDisposition == "D", 2, ifelse(MethodOfDisposition == "E", 3, ifelse(MethodOfDisposition == "O", 4, ifelse(MethodOfDisposition == "R", 5, 6))))))) %>% select(MannerOfDeath, disposNum)-> data2
+#View(data2)
+chisq.test(Ys, DayOfWeekOfDeaths)
+chisq.test(Ys, MethodOfDisposition)
+chisq.test(Ys, Education2003Revision)
+chisq.test(Ys, Autopsy)
+chisq.test(Ys, PlaceOfInjury)
+chisq.test(Ys, RaceRecode5)
+chisq.test(Ys, Sexs)
+chisq.test(Ys, Ages)
+chisq.test(Ys, Residents)
+```
+
+We can see effect of Sex over Manner of Death is the smallest.
+</p>
+
+***
+
+<p dir="LTR">
+3.
+```{r}
+death_imp_vars_factor = death_imp_vars
+#View(death_imp_vars_factor)
+death_imp_vars$ResidentStatus = as.factor(death_imp_vars_factor$ResidentStatus)
+death_imp_vars$Age = as.factor(death_imp_vars_factor$Age)
+death_imp_vars$DayOfWeekOfDeath = as.factor(death_imp_vars_factor$DayOfWeekOfDeath)
+death_imp_vars$ResidentStatus = as.factor(death_imp_vars_factor$ResidentStatus)
+death_imp_vars$Education2003Revision = as.factor(death_imp_vars_factor$Education2003Revision)
+death_imp_vars$PlaceOfInjury = as.factor(death_imp_vars_factor$PlaceOfInjury)
+death_imp_vars$RaceRecode5 = as.factor(death_imp_vars_factor$RaceRecode5)
+model_logit = glm(formula = MannerOfDeath ~ ., family = binomial(link = "logit"), data = death_imp_vars_factor)
+summary(model_logit)
+```
+by looking at the P_values, we can remove "DayOfWeekOfDeath", "Sex" and "Age" from our variables.
+```{r}
+imp_vars = c("Id", "ResidentStatus", "MannerOfDeath" ,"MethodOfDisposition", "Education2003Revision", "Autopsy" ,"PlaceOfInjury", "RaceRecode5")
+death_imp_vars <- death %>% select(c(imp_vars))
+death_imp_vars[,"MannerOfDeath"] = death_imp_vars[,"MannerOfDeath"] - 2
+death_imp_vars_factor = death_imp_vars
+#View(death_imp_vars_factor)
+death_imp_vars$ResidentStatus = as.factor(death_imp_vars_factor$ResidentStatus)
+#death_imp_vars$DayOfWeekOfDeath = as.factor(death_imp_vars_factor$DayOfWeekOfDeath)
+death_imp_vars$ResidentStatus = as.factor(death_imp_vars_factor$ResidentStatus)
+death_imp_vars$Education2003Revision = as.factor(death_imp_vars_factor$Education2003Revision)
+death_imp_vars$PlaceOfInjury = as.factor(death_imp_vars_factor$PlaceOfInjury)
+death_imp_vars$RaceRecode5 = as.factor(death_imp_vars_factor$RaceRecode5)
+model_logit = glm(formula = MannerOfDeath ~ ., family = binomial(link = "logit"), data = death_imp_vars)
+summary(model_logit)
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+4.
+```{r}
+data4 = death_imp_vars
+data4$predicted = predict(model_logit, data4, type = "response")
+library(thatssorandom)
+ggmm(data4, MannerOfDeath, Education2003Revision)
+#ggmm(data4, MannerOfDeath, DayOfWeekOfDeath)
+ggmm(data4, MannerOfDeath, Autopsy)
+ggmm(data4, MannerOfDeath, MethodOfDisposition)
+ggmm(data4, MannerOfDeath, PlaceOfInjury)
+ggmm(data4, MannerOfDeath, RaceRecode5)
+
+ppp = plot(model_logit)
+```
+We plot mosaic plots, it is specially showing us that how Autopsy, MethodOfDisposition, Race and PlaceOfInjury is related to MannerOfDeath.    
+
+There is also Residuals vs. Leverage plot. Which shows us there is not an oulier which affect the model significantly.    
+
+Normal Q-Q plot shows the residuals are not fitted to normal distribution. But in logistic regression, it is not important.     
+
+</p>
+
+***
+
+<p dir="LTR">
+5.
+```{r}
+set.seed(003)
+data5 = death_imp_vars[sample(1:nrow(death_imp_vars)), ]
+train = death_imp_vars %>% slice(1: (0.8 * nrow(death_imp_vars)))
+test = death_imp_vars %>% slice((0.8 * nrow(death_imp_vars)): nrow(death_imp_vars))
+model_logit5 = glm(formula = MannerOfDeath ~ ., family = binomial(link = "logit"), data = train)
+train$predict = predict(model_logit5, train, type = "response")
+train$predictRound = ifelse(train$predict <= 0.5, 0, 1)
+test$predict = predict(model_logit5, test, type = "response")
+test$predictRound = ifelse(test$predict <= 0.5, 0, 1)
+test$MannerOfDeath = as.factor(test$MannerOfDeath)
+library(e1071)
+
+cmMatrix = confusionMatrix( as.factor(test$predictRound), as.factor(test$MannerOfDeath))
+cmMatrix
+```
+We have:
+P = `r cmMatrix$table[2,1] +  cmMatrix$table[2,2]`    
+
+N = `r cmMatrix$table[1,1] +  cmMatrix$table[1, 2]`    
+
+TP = `r cmMatrix$table[2,2]`    
+
+TN = `r  cmMatrix$table[1,1] `    
+
+FP = `r cmMatrix$table[2,1]`    
+
+FN = `r cmMatrix$table[1,2]`    
+
+ACC = `r (cmMatrix$table[2,2] + cmMatrix$table[1,1]) / (cmMatrix$table[2,1] +  cmMatrix$table[2,2] + cmMatrix$table[1,1] +  cmMatrix$table[1, 2])`    
+
+FPR = `r 1 - ( cmMatrix$table[1,1]/(cmMatrix$table[1,1] +  cmMatrix$table[1, 2])) `    
+
+TPR = `r cmMatrix$table[2,2]/ (cmMatrix$table[2,1] +  cmMatrix$table[2,2])`    
+
+```{r}
+cm_info = ConfusionMatrixInfo( data = test, predict = "predict", 
+                                actual = "MannerOfDeath", cutoff = .5)
+cm_info$plot
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+6.
+```{r}
+#train$predict = as.factor(train$predict)
+#test$predict = as.factor(test$predict)
+#train$MannerOfDeath = as.factor(train$MannerOfDeath)
+#test$MannerOfDeath = as.factor(test$MannerOfDeath)
+accuracy_info = AccuracyCutoffInfo( train = train, test = test, 
+                                     predict = "predict", actual = "MannerOfDeath" )
+accuracy_info$plot
+```
+As we can see, the best cutoff is abut 0.5.
+</p>
+
+***
+
+<p dir="LTR">
+7.
+```{r}
+cost_fp = 100;
+cost_fn = 200
+roc_info = ROCInfo( data = cm_info$data, predict = "predict", 
+                     actual = "actual", cost.fp = cost_fp, cost.fn = cost_fn )
+grid.draw(roc_info$plot)
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+8.
+```{r}
+library(h2o)
+h2o.init()
+happly = as.h2o(death_imp_vars)
+#hglm = h2o.glm(y = "MannerOfDeath", x= imp_vars,
+           #    training_frame = happly, family="binomial")
+chglm = h2o.glm(y = "MannerOfDeath", x= imp_vars,
+               training_frame = happly, family="binomial",nfolds = 5)
+chglm
+```
+0.633003
+We can see MSE is 0.1283972 and mean precision is 0.8074321. Error is not good. Specially because all the errors in 5 folds are about 0.19. But accuracy is about 0.8 which is a smoothly good one. 
+</p>
+
+***
+
+<p dir="LTR"> 
+9. 
+For such system, False Negative should be as low as possible. In fact, we can even sacrifice accuracy in favor of a lower type 2 error. Because this system is not the final judge, and it acts just as a filter for further investigation, type 2 error (minimizing the False Negatives) are much more important that type 1 error (minimizing the True negative). We can reach this by setting a greater cutoff (0.8 maybe a good one). 
+</p>
+
+

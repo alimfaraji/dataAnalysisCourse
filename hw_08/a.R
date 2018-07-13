@@ -1,0 +1,1 @@
+wordcloud2(data = head(all_Dickens_Novels_normalized, 200), figPath = "C:\\Users\\hoco\\Documents\\resumes\\dickens1_1.png", size = 0.3)

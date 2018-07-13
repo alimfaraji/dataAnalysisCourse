@@ -1,0 +1,157 @@
+---
+title: "Fourth Week: Hypothesis Testing"
+subtitle: "TIMSS Analysis"
+author: "??Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/math.jpg"  align = 'center'>
+</div>
+
+<h1 dir="LTR"> 
+1.
+loading data:
+```{r}
+library(dplyr)
+library(ggplot2)
+bcg = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\data\\bcg.rds")
+bsa = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\data\\bsa.rds")
+bsg = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\data\\bsg.rds")
+bsr = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\data\\bsr.rds")
+bst = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\data\\bst.rds")
+btm = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\data\\btm.rds")
+bts = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\data\\bts.rds")
+tims = readRDS("C:\\Users\\hoco\\Desktop\\data analysis\\hw_04\\DataAnalysis_data_hw4\\timss_2015.rds")
+```
+
+
+```{r}
+merge(bts, bst, by.x = c("idcntry", "idschool", "itcourse", "idteach"), by.y = c("idcntry", "idschool", "itcourse", "idteach")) %>% select(idcntry, idschool, itcourse, idteach, idstud, bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05, btbg10a, btbg10b, btbg10c, btbg10d, btbg10e, btbg10f, btbg10g) %>% rowwise() %>%  mutate(goodInMath = mean(c(bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05), na.rm = T)) %>% mutate(satisfaction = ifelse(btbg10b<3,1,0), na.rm = T) %>% select(goodInMath, satisfaction) -> satisfactionTeacher
+hypo_tTest = t.test(goodInMath~satisfaction , data = satisfactionTeacher)
+print(hypo_tTest)
+ggplot(satisfactionTeacher, aes(satisfaction, goodInMath, group = satisfaction, fill = satisfaction)) + geom_boxplot()
+```
+
+according to P-value, they are not independent.
+</p>
+
+
+***
+
+<p dir="LTR">
+2.
+```{r}
+bsg %>% select(idcntry, idschool, idstud, bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05, bsbg07a, bsbg07b) %>% group_by(idcntry, idschool, idstud) %>% filter(bsbg07a <= 7 & bsbg07b <= 7) %>%  summarise(parentsAc = mean(c(bsbg07a, bsbg07b), na.rm = T) , goodAtMath = mean(c(bsmmat01, bsmmat02 ,bsmmat03, bsmmat04, bsmmat05), na.rm = T))  -> parentsAcademic
+parentsAcademic %>% mutate(newAc = ifelse(parentsAc > 4, 1, 0)) -> parentsAcademicCateg
+t.test(goodAtMath~newAc, data = parentsAcademicCateg) -> parentsActTest
+print(parentsActTest)
+ggplot(parentsAcademicCateg, aes(newAc, goodAtMath, group = newAc, fill = newAc)) + geom_boxplot()
+```
+
+according to P-value, they are not independent.
+</p>
+
+***
+
+<p dir="LTR">
+3.
+```{r}
+bsg %>% select(idcntry, idschool, idstud, bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05, bsbg06a, bsbg06b, bsbg06c, bsbg06d, bsbg06e, bsbg06f, bsbg06g) %>% group_by(idcntry, idschool, idstud) %>% summarise(goodAtMath = mean(c(bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05), na.rm = T), refahi = mean(c(bsbg06a,bsbg06b, bsbg06c, bsbg06d, bsbg06e, bsbg06f, bsbg06g))) %>% rowwise() %>% mutate(refahi2 = ifelse(refahi < 1.5, 1, 0)) -> refahi3
+aov(goodAtMath ~ refahi2, data = refahi3) -> aov3
+print(summary.aov(aov3))
+ggplot(refahi3, aes(refahi2, goodAtMath, group = refahi2, fill = refahi2)) + geom_boxplot()
+```
+
+according to P-value and the plot, the statement is true.
+</p>
+
+***
+
+<p dir="LTR">
+4.
+```{r}
+
+merge(bts, bst, by.x = c("idcntry", "idschool", "itcourse", "idteach"), by.y = c("idcntry", "idschool", "itcourse", "idteach")) %>% select(idcntry, idschool, itcourse, idteach, idstud, bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05, btbg07b) %>% rowwise() %>%  mutate(goodAtMath = mean(c(bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05), na.rm = T)) %>%  select(goodAtMath, safety = btbg07b) -> mohitAram 
+aov(goodAtMath ~ safety, data = mohitAram) -> aov4
+print(summary.aov(aov4))
+ggplot(mohitAram, aes(safety, goodAtMath, group = safety, fill = safety)) + geom_boxplot()
+```
+
+according to P-value and the plot, the statement is true.
+</p>
+
+***
+
+<p dir="LTR">
+5.
+</p>
+
+***
+
+<p dir="LTR">
+6.
+```{r}
+
+```
+
+</p>
+
+***
+
+<p dir="LTR"> 
+7.
+```{r}
+bsg %>% select(bsbg12, idcntry, idschool, idstud, bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05) %>% group_by(idcntry, idschool, idstud) %>% summarise(eat = mean(bsbg12) , goodAtMath = mean(c(bsmmat01, bsmmat02 ,bsmmat03, bsmmat04, bsmmat05), na.rm = T)) -> eat7
+aovEat = aov(goodAtMath ~ eat, data = eat7)
+print(summary.aov(aovEat))
+ggplot(eat7, aes(eat, goodAtMath, fill = eat, group = eat)) + geom_boxplot()
+```
+
+according to P-value and the plot, the statement is true.
+</p>
+
+***
+
+<p dir="LTR"> 
+8.
+```{r}
+
+```
+
+</p>
+
+***
+
+<p dir="LTR"> 
+9.
+```{r}
+bsg %>% select(idcntry, idschool, idstud, bsmmat01, bsmmat02, bsmmat03, bsmmat04, bsmmat05, bsbg11) %>% group_by(idcntry, idschool, idstud) %>% summarise(presence = mean(bsbg11) , goodAtMath = mean(c(bsmmat01, bsmmat02 ,bsmmat03, bsmmat04, bsmmat05), na.rm = T)) -> studentPresence
+aovPresence = aov(goodAtMath ~ presence, data = studentPresence)
+print(summary.aov(aovPresence))
+ggplot(studentPresence, aes(presence, goodAtMath, fill = presence, group = presence)) + geom_boxplot()
+```
+
+according to P-value and the plot, the statement is true.
+</p>
+
+***
+
+<p dir="LTR"> 
+10.
+```{r}
+tims %>% filter(Country == "Iran, Islamic Rep. of") %>%  filter(cognitive_domain == "Applying" | cognitive_domain == "Reasoning") -> Iran10
+aov(correct_ratio_per_question~cognitive_domain, data = Iran10) -> aov10
+print(summary.aov(aov10))
+ggplot(Iran10, aes(cognitive_domain, correct_ratio_per_question, group = cognitive_domain, fill = cognitive_domain)) + geom_boxplot()
+```
+
+according to P-value and the plot, the statement is not true. In fact Iranian students are better in Applying than Reasoning.
+
+</p>
+
+

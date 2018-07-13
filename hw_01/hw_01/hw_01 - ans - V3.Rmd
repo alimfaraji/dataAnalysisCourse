@@ -1,0 +1,266 @@
+---
+title: "hw_01 - ans - V3"
+author: "Alim Faraji"
+date: "February 10, 2018"
+output: html_document
+---
+
+<div align="center">
+<img  src="images/Rman.jpeg"  align = 'center'>
+</div>
+
+
+<h1 dir="RTL"> 
+ØªÙØ±ÛÙ Ø³Ø±Û Ø§ÙÙ: ÚÙØ¯ ÙØ³Ø§ÙÙ
+</h1>
+
+<p dir="RTL"> 
+Ø¨Ù Ø³ÙØ§Ù ÙØ§Û Ø²ÛØ± Ø±Ø§ Ø§Ø² Ø·Ø±ÛÙ ÙÙØ´ØªÙ ÛÚ© Ú©Ø¯ Ù¾Ø§Ø³Ø® Ø¯ÙÛØ¯.
+</p>
+
+***
+
+<h2 dir="RTL">
+ÙØ§ØªØ±ÛØ³ Ø¯ÙØ³ØªØ§ÙÙ
+</h2>
+
+<p dir="RTL">
+ÛÚ© ÙØ§ØªØ±ÛØ³
+$(n,n)$
+Ú©Ù Ø´Ø§ÙÙ Ø§Ø¹Ø¯Ø§Ø¯ 
+$1,2,...,n^2$
+Ø§Ø³Øª. Ø¯ÙØ³ØªØ§ÙÙ ÙØ§ÙÛØ¯Ù ÙÛØ´ÙØ¯ Ø§Ú¯Ø± ÙØ¬ÙÙØ¹ Ø³Ø·Ø±ÙØ§ Ø¨Ø§ ÙØ¬ÙÙØ¹ Ø³ØªÙÙ ÙØ§Û Ø¢Ù Ø¨Ø±Ø§Ø¨Ø± Ø´ÙÙØ¯. ÙØ«Ø§Ù ÙØ§ÛÛ Ø§Ø² ÙØ§ØªØ±ÛØ³ ÙØ§Û Ø¯ÙØ³ØªØ§ÙÙ Ø§Ø² Ø¨Ø¹Ø¯ Û´ÙÛµÙÛ¶ Ø§Ø±Ø§ÛÙ Ø¯ÙÛØ¯. 
+</p>
+
+```{r}
+library(survival)
+library(abind)
+library(magic)
+magic4 = magic(4)
+magic5 = magic(5)
+magic6 = magic(6)
+magic4
+rowSums(magic4)
+colSums(magic4)
+magic5
+rowSums(magic5)
+colSums(magic5)
+magic6
+rowSums(magic6)
+colSums(magic6)
+```
+
+***
+
+<h2 dir="RTL">
+Ø¬Ø§ÛØ´Ú¯Øª  Ø¹Ø¬ÛØ¨
+</h2>
+
+<p dir="RTL">
+Ø¬Ø§ÛÚ¯Ø´Øª ÙØ§ÛÛ Ø§Ø² Ø§Ø¹Ø¯Ø§Ø¯ Û± ØªØ§ Û±Û³ Ø±Ø§ Ù¾ÛØ¯Ø§ Ú©ÙÛØ¯ Ú©Ù Ø¯Ø± Ø´Ø±Ø§ÛØ· Ø²ÛØ± ØµØ¯Ù Ú©ÙÙØ¯:
+</p>
+
+$$ a = (a_1, a_2,..., a_{13})$$
+$$\frac{a_1}{a_2+a_3} = \frac{a_2+a_3}{a_3+a_4+a_5}<1$$
+$$\frac{a_6}{a_6+a_7}= \frac{a_6+a_7}{a_7+a_8+a_9} = \frac{a_7+a_8+a_9}{a_5+a_9+a_{10}} <1$$
+
+$$\frac{a_{11}+a_{12}}{a_{12}+a_{13}}=\frac{a_{12}+a_{13}}{a_{13}+a_{10}}<1$$
+
+***
+
+<h2 dir="RTL">
+ÙÚ Ú¯ÛØ±Û
+</h2>
+
+<p dir="RTL">
+ÙÛØ²Ú¯Ø±Ø¯Û Ø´Ø§ÙÙ Û±Û¶ ÙØ±Ø¯ Ø¯Ø±ÙØºÚ¯Ù Ù Ø±Ø§Ø³ØªÚ¯Ù ØªØ´Ú©ÛÙ Ø´Ø¯Ù Ø§Ø³Øª. ÙØ± Ú©Ø³Û Ø§Ø¯Ø¹Ø§ ÙÛÚ©ÙØ¯ Ø¯Ù ÙØ±Ø¯ Ú©ÙØ§Ø± Ø¯Ø³ØªÛ Ø§Ù Ø¯Ø±ÙØºÚ¯Ù ÙØ³ØªÙØ¯. ÚÙØ¯ ÙÙØ± Ø¯Ø±ÙØºÚ¯Ù Ø¯Ø± Ø¬ÙØ¹ ÙØ¬ÙØ¯ Ø¯Ø§Ø±Ø¯Ø
+</p>
+
+<p dir="RTL">
+ÙÛØ²Ú¯Ø±Ø¯ Ø¯ÛÚ¯Ø±Û Ø´Ø§ÙÙ Û±Û² ÙÙØ± ÙØ±Ø¯ Ø±Ø§Ø³ØªÚ¯Ù Ù Ø¯Ø±ÙØºÚ¯Ù ØªØ´Ú©ÛÙ Ø´Ø¯Ù Ø¨Ù Ø·ÙØ±Û Ú©Ù ÙØ± ÙØ±Ø¯ Ø§Ø¯Ø¹Ø§ ÙÛÚ©ÙØ¯ Ø§Ø² ÙÛØ§Ù Ø¯Ù ÙÙØ± Ú©ÙØ§Ø± Ø¯Ø³ØªÛ ÛÚ© ÙÙØ± Ø±Ø§Ø³ØªÚ¯Ù Ù ÛÚ© ÙÙØ± Ø¯Ø±ÙØºÚ¯Ù ÙØ³ØªÙØ¯. ÚÙØ¯ ÙÙØ± Ø¯Ø±ÙØºÚ¯Ù Ø¯Ø± Ø¬ÙØ¹ ÙØ¬ÙØ¯ Ø¯Ø§Ø±Ø¯Ø
+</p>
+
+<p dir="RTL">
+Ø§ÛÙ Ø¯ÙØ¹Ù ÙÛØ²Ú¯Ø±Ø¯Û ÙØ´Øª ÙÙØ±Ù ØªØ´Ú©ÛÙ Ø´Ø¯Ù Ø¨Ù Ú¯ÙÙÙ Ø§ÛÛ Ú©Ù ÚÙØ§Ø± ÙÙØ± Ø§Ø¯Ø¹Ø§ ÙÛÚ©ÙÙØ¯ Ø§Ø² Ø§Ø² ÙÛØ§Ù Ø¯Ù ÙÙØ± Ú©ÙØ§Ø± Ø¯Ø³ØªÛ ÛÚ©Û Ø¯Ø±ÙØºÚ¯Ù Ù Ø¯ÛÚ¯Ø±Û Ø±Ø§Ø³ØªÚ¯ÙØ³Øª Ù ÚÙØ§Ø± ÙÙØ± Ø¯ÛÚ¯Ø± Ø§Ø¹ÙØ§Ù ÙÛÚ©ÙÙØ¯ Ú©Ù ÙØ± Ø¯Ù ÙØ±Ø¯ Ú©ÙØ§Ø± Ø¯Ø³ØªÛ Ø¢ÙÙØ§ Ø¯Ø±ÙØºÚ¯Ù ÙØ³ØªÙØ¯. ÚÙØ¯ ÙÙØ± Ø¯Ø±ÙØºÚ¯Ù Ø¯Ø± ÙÛØ§Ù Ø¬ÙØ¹ Ø§Ø³ØªØ
+</p>
+```{r}
+library(HapEstXXR)
+
+n = 16
+ans = rep(0,n)
+people = 1:15
+all_subsets = powerset(people)
+for (subset in all_subsets){
+  values = rep(0,n)
+  for (false in subset){
+    values[false] = 1
+  }
+  temp = 0
+  for(i in 1:n){
+    if(i == 1){
+      if (values[i]==0 && (values[n] == 0 || values[i+1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[n] == 1 && values[i+1] == 1)){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && (values[1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && (values[i+1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[i+1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }
+  }
+  if(temp == 0){
+    ans = values
+    break
+  }
+}
+ans
+
+n = 12
+ans = rep(0,n)
+people = 1:n
+all_subsets = powerset(people)
+for (subset in all_subsets){
+  values = rep(0,n)
+  for (false in subset){
+    values[false] = 1
+  }
+  temp = 0
+  for(i in 1:n){
+    if(i == 1){
+      if (values[i]==0 && ((values[n] == 1 && values[i+1] == 1) || (values[n] == 0 && values[i+1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[n] == 1 && values[i+1] == 0) || (values[n] == 0 && values[i+1] == 1))){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && ((values[1] == 1 && values[i-1] == 1) || (values[1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[1] == 1 && values[i-1] == 0) || (values[1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && ((values[i+1] == 1 && values[i-1] == 1) || (values[i+1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[i+1] == 1 && values[i-1] == 0) || (values[i+1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }
+  }
+  if(temp == 0){
+    ans = values
+    break
+  }
+}
+ans
+
+n = 8
+four_subsets = combn(1:n, n/2)
+types = rep(0,n)
+ans = rep(0,n)
+people = 1:n
+all_subsets = powerset(people)
+for (four_subset in four_subsets){
+  for (subset in all_subsets){
+    temp = 0
+    for (i in 1:n){
+      if (is.element(i, four_subset)){
+        if(i == 1){
+      if (values[i]==0 && ((values[n] == 1 && values[i+1] == 1) || (values[n] == 0 && values[i+1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[n] == 1 && values[i+1] == 0) || (values[n] == 0 && values[i+1] == 1))){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && ((values[1] == 1 && values[i-1] == 1) || (values[1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[1] == 1 && values[i-1] == 0) || (values[1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && ((values[i+1] == 1 && values[i-1] == 1) || (values[i+1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[i+1] == 1 && values[i-1] == 0) || (values[i+1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }
+      }else{
+        if(i == 1){
+      if (values[i]==0 && (values[n] == 0 || values[i+1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[n] == 1 && values[i+1] == 1)){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && (values[1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && (values[i+1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[i+1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }
+      }
+    }
+    if (temp == 0){
+      ans = values
+      for (j in 1:n){
+        if(is.element(j, four_subset))
+          types[j] = 1;
+      }
+      return()
+    }
+  } 
+}
+ans
+types
+```
+

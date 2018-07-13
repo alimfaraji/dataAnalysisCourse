@@ -1,0 +1,269 @@
+---
+title: "first week: Introduction to R and Rstudio"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/Rman.jpeg"  align = 'center'>
+</div>
+
+
+<h1 dir="RTL"> 
+تمرین سری اول: چند مساله
+</h1>
+
+<p dir="RTL"> 
+به سوال های زیر را از طریق نوشتن یک کد پاسخ دهید.
+</p>
+
+***
+
+<h2 dir="RTL">
+ماتریس دوستانه
+</h2>
+
+<p dir="RTL">
+یک ماتریس
+$(n,n)$
+که شامل اعداد 
+$1,2,...,n^2$
+است. دوستانه نامیده میشود اگر مجموع سطرها با مجموع ستون های آن برابر شوند. مثال هایی از ماتریس های دوستانه از بعد ۴و۵و۶ ارایه دهید. 
+</p>
+
+```{r}
+library(survival)
+library(abind)
+library(magic)
+magic4 = magic(4)
+magic5 = magic(5)
+magic6 = magic(6)
+magic4
+rowSums(magic4)
+colSums(magic4)
+magic5
+rowSums(magic5)
+colSums(magic5)
+magic6
+rowSums(magic6)
+colSums(magic6)
+```
+
+***
+
+<h2 dir="RTL">
+جایشگت  عجیب
+</h2>
+
+<p dir="RTL">
+جایگشت هایی از اعداد ۱ تا ۱۳ را پیدا کنید که در شرایط زیر صدق کنند:
+</p>
+
+$$ a = (a_1, a_2,..., a_{13})$$
+$$\frac{a_1}{a_2+a_3} = \frac{a_2+a_3}{a_3+a_4+a_5}<1$$
+$$\frac{a_6}{a_6+a_7}= \frac{a_6+a_7}{a_7+a_8+a_9} = \frac{a_7+a_8+a_9}{a_5+a_9+a_{10}} <1$$
+
+$$\frac{a_{11}+a_{12}}{a_{12}+a_{13}}=\frac{a_{12}+a_{13}}{a_{13}+a_{10}}<1$$
+
+***
+
+<h2 dir="RTL">
+مچ گیری
+</h2>
+
+<p dir="RTL">
+میزگردی شامل ۱۶ فرد دروغگو و راستگو تشکیل شده است. هر کسی ادعا میکند دو فرد کنار دستی او دروغگو هستند. چند نفر دروغگو در جمع وجود دارد؟
+</p>
+
+<p dir="RTL">
+میزگرد دیگری شامل ۱۲ نفر فرد راستگو و دروغگو تشکیل شده به طوری که هر فرد ادعا میکند از میان دو نفر کنار دستی یک نفر راستگو و یک نفر دروغگو هستند. چند نفر دروغگو در جمع وجود دارد؟
+</p>
+
+<p dir="RTL">
+این دفعه میزگردی هشت نفره تشکیل شده به گونه ایی که چهار نفر ادعا میکنند از از میان دو نفر کنار دستی یکی دروغگو و دیگری راستگوست و چهار نفر دیگر اعلام میکنند که هر دو فرد کنار دستی آنها دروغگو هستند. چند نفر دروغگو در میان جمع است؟
+</p>
+```{r}
+library(HapEstXXR)
+
+n = 16
+ans = rep(0,n)
+people = 1:15
+all_subsets = powerset(people)
+for (subset in all_subsets){
+  values = rep(0,n)
+  for (false in subset){
+    values[false] = 1
+  }
+  temp = 0
+  for(i in 1:n){
+    if(i == 1){
+      if (values[i]==0 && (values[n] == 0 || values[i+1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[n] == 1 && values[i+1] == 1)){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && (values[1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && (values[i+1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[i+1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }
+  }
+  if(temp == 0){
+    ans = values
+    break
+  }
+}
+ans
+
+n = 12
+ans = rep(0,n)
+people = 1:n
+all_subsets = powerset(people)
+for (subset in all_subsets){
+  values = rep(0,n)
+  for (false in subset){
+    values[false] = 1
+  }
+  temp = 0
+  for(i in 1:n){
+    if(i == 1){
+      if (values[i]==0 && ((values[n] == 1 && values[i+1] == 1) || (values[n] == 0 && values[i+1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[n] == 1 && values[i+1] == 0) || (values[n] == 0 && values[i+1] == 1))){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && ((values[1] == 1 && values[i-1] == 1) || (values[1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[1] == 1 && values[i-1] == 0) || (values[1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && ((values[i+1] == 1 && values[i-1] == 1) || (values[i+1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[i+1] == 1 && values[i-1] == 0) || (values[i+1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }
+  }
+  if(temp == 0){
+    ans = values
+    break
+  }
+}
+ans
+
+n = 8
+four_subsets = combn(1:n, n/2)
+types = rep(0,n)
+ans = rep(0,n)
+people = 1:n
+all_subsets = powerset(people)
+for (four_subset in four_subsets){
+  for (subset in all_subsets){
+    temp = 0
+    for (i in 1:n){
+      if (is.element(i, four_subset)){
+        if(i == 1){
+      if (values[i]==0 && ((values[n] == 1 && values[i+1] == 1) || (values[n] == 0 && values[i+1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[n] == 1 && values[i+1] == 0) || (values[n] == 0 && values[i+1] == 1))){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && ((values[1] == 1 && values[i-1] == 1) || (values[1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[1] == 1 && values[i-1] == 0) || (values[1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && ((values[i+1] == 1 && values[i-1] == 1) || (values[i+1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[i+1] == 1 && values[i-1] == 0) || (values[i+1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }
+      }else{
+        if(i == 1){
+      if (values[i]==0 && (values[n] == 0 || values[i+1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[n] == 1 && values[i+1] == 1)){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && (values[1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && (values[i+1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[i+1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }
+      }
+    }
+    if (temp == 0){
+      ans = values
+      for (j in 1:n){
+        if(is.element(j, four_subset))
+          types[j] = 1;
+      }
+      return()
+    }
+  } 
+}
+ans
+types
+```
+

@@ -1,0 +1,150 @@
+---
+title: "Tenth Week: Principal Component Analysis and Factor Analysis"
+subtitle: "PCA Stock, image, ..."
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/stock.jpg"  align = 'center'>
+</div>
+
+```{r}
+library(EBImage)
+library(dplyr)
+library(ggplot2)
+```
+
+
+***
+
+<p dir="RTL">
+1.
+```{r}
+constituents = read.csv("data\\constituents.csv", stringsAsFactors=FALSE)
+indexes = read.csv("data\\indexes.csv", stringsAsFactors=FALSE)
+allTmp = read.csv(paste("data\\stock_dfs\\", paste(as.character(constituents[1,]$Symbol), ".csv", sep= ""), sep = ""), stringsAsFactors = F)
+  allTmp$Symbol = rep(constituents[1,]$Symbol, length(allTmp))
+  allTmp$Name = rep(constituents[1,]$Name, nrow(allTmp))
+  allTmp$Sector = rep(constituents[1,]$Sector, nrow(allTmp))
+for (row in 2:nrow(constituents)){
+  filename = paste("data\\stock_dfs\\", paste(constituents[row,]$Symbol, ".csv", sep= ""), sep = "")
+  if (file.exists(filename)){
+  tmp = read.csv(filename, stringsAsFactors = F)
+  tmp$Symbol = rep(constituents[row,]$Symbol, nrow(tmp))
+  tmp$Name = rep(constituents[row,]$Name, nrow(tmp))
+  tmp$Sector = rep(constituents[row,]$Sector, nrow(tmp))
+  allTmp = rbind(allTmp, tmp)
+  }
+}
+all_consts = allTmp %>% rowwise( ) %>% mutate (day = as.integer(unlist(strsplit(Date,  '-'))[3]), month = as.integer(unlist(strsplit(Date,  '-'))[2]), year = as.integer(unlist(strsplit(Date, '-'))[1]))
+View(all_consts)  
+
+#all_consts %>% arrange(year, month, day) %>% group_by(Symbol, year) %>% summarise(prof1 = (last(Close) - first(Open))/first(Open)) %>% arrange(-prof1) -> tmp2
+#tmp2 %>% arrange(-prof1) %>% head(5) %>% print
+
+tmp2 = all_consts %>% arrange(year, month, day) %>% group_by(Symbol, year) %>% summarise(cat = first(Sector), lastMon = last(Close), firstMon = first(Open))
+
+View(tmp2)
+tmp2$prof1 = rep(0, nrow(tmp2))
+tmp2$prof2 = rep(0, nrow(tmp2))
+tmp2$prof5 = rep(0, nrow(tmp2))
+  for (row in 1:nrow(tmp2)){
+    prevRow = row
+    if (prevRow > 0){
+      if (tmp2[row,]$Symbol == tmp2[prevRow,]$Symbol){
+        tmp2[row,]$prof1 = (tmp2[row,]$lastMon - tmp2[prevRow,]$firstMon)/tmp2[prevRow,]$firstMon
+      }
+    }
+  }
+  for (row in 1:nrow(tmp2)){
+    prevRow = row - 1
+    if (prevRow > 0){
+      if (tmp2[row,]$Symbol == tmp2[prevRow,]$Symbol){
+        tmp2[row,]$prof2 = (tmp2[row,]$lastMon - tmp2[prevRow,]$firstMon)/tmp2[prevRow,]$firstMon
+      }
+    }
+  }
+
+  for (row in 1:nrow(tmp2)){
+    prevRow = row - 4
+    if (prevRow > 0){
+      if (tmp2[row,]$Symbol == tmp2[prevRow,]$Symbol){
+        tmp2[row,]$prof5 = (tmp2[row,]$lastMon - tmp2[prevRow,]$firstMon)/tmp2[prevRow,]$firstMon
+      }
+    }
+  }
+tmp2 %>% arrange(-prof1) %>% head(5) %>% print()
+tmp2 %>% arrange(-prof2) %>% head(5) %>% print()
+tmp2 %>% arrange(-prof5) %>% head(5) %>% print()
+
+tmp2 %>% arrange(-prof1) %>% head(10)  %>% ggplot(aes(x = reorder(Symbol, -prof1), y = prof1, fill = cat)) + geom_bar(stat = "identity") 
+tmp2 %>% arrange(-prof2) %>% head(10)  %>% ggplot(aes(x = reorder(Symbol, -prof2), y = prof2, fill = cat)) + geom_bar(stat = "identity") 
+tmp2 %>% arrange(-prof5) %>% head(10)  %>% ggplot(aes(x = reorder(Symbol, -prof5), y = prof5, fill = cat)) + geom_bar(stat = "identity") 
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+2.
+```{r}
+thirteen = all_consts %>% filter(day == 13) %>% mutate(prof = Close - Open) 
+oths = all_consts %>% filter(day != 13) %>% mutate(prof = Close - Open)
+t.test(thirteen$prof, oths$prof, alternative = "two.sided")
+```
+
+So we can not reject H_0: that 13th day of month is just like other days. Hence we can loosely conclude that 13th day is not sinister. 
+
+</p>
+
+***
+
+<p dir="RTL">
+3.
+```{r}
+all_consts %>% rowwise() %>%  mutate(t = ( ((Open + Close)*Volume) / 2)) %>% group_by(Date) %>% summarise(s = sum(t)) %>% arrange(-s) -> tmp
+head(tmp)
+```
+It is 2008/01/23. It shows one of the important days of the 2008 great recessoin.
+</p>
+
+
+
+
+***
+
+
+<p dir="LTR"> 
+9.
+```{r}
+pic = flip(readImage("images/stock.jpg"))
+red.weigth   = .2989; green.weigth = .587; blue.weigth  = 0.114
+img = red.weigth * imageData(pic)[,,1] +
+  green.weigth * imageData(pic)[,,2] + blue.weigth  * imageData(pic)[,,3]
+image(img, col = grey(seq(0, 1, length = 256)))
+pca.img = prcomp(img, scale=TRUE)
+plot(summary(pca.img)$importance[3,], type="l",
+     ylab="%variance explained", xlab="nth component (decreasing order)");abline(h=0.99,col="red");abline(v = 109,col="red",lty=3)
+str(summary(pca.img)$importance)
+```
+As we can see, by choosing n = 109, we can capture 99% of the variance and also have great compression. 
+</p>
+
+***
+
+<p dir="RTL"> 
+10.   
+a. Find if it is a relation between success of a company in long turn and its financial behaviour in short turn.    
+b. Find the effect of different holidays on the exchange market.    
+c. Find how changes in big componies affect other (smaller) companies.   
+d. Find if there is any relation between changes in different categories (Industrials, Health care, ...).   
+e. Find how overall market changes over time.    
+f. Find if there is any good month (or day) for a company to start.    
+</p>
+

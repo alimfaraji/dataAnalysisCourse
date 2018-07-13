@@ -1,0 +1,289 @@
+---
+title: "Solution for first week assignment"
+output:
+  html_document:
+    df_print: paged
+---
+<center color = "blue">
+##Ali Mohammad Faraji
+### 93100909
+</center>
+#Solution 1
+```{r}
+library(abind)
+library(magic)
+magic4 = magic(4)
+magic5 = magic(5)
+magic6 = magic(6)
+magic4
+rowSums(magic4)
+colSums(magic4)
+magic5
+rowSums(magic5)
+colSums(magic5)
+magic6
+rowSums(magic6)
+colSums(magic6)
+```
+
+
+#Solution 2
+```{r}
+A1set = 1:13
+for (a1 in A1set){
+  A2set = A1set[A1set != a1]
+  for (a2 in A2set){
+    A3set = A2set[A2set != a2]
+    for (a3 in A3set){
+      if (a1 >= a2 + a3)
+        next
+      A4set = A3set[A3set != a3]
+      for (a4 in A4set){
+        A5set = A4set[A4set != a4]
+        for (a5 in A5set){
+          if ((a2 + a3) >= (a3 + a4 + a5))
+            next
+          if ((a1 * (a3 + a4 + a5)) != ((a2 + a3)^2))
+            next
+          A6set = A5set[A5set != a5]
+          for (a6 in A6set){
+            A7set = A6set[A6set != a6]
+            for (a7 in A7set){
+              A8set = A7set[A7set != a7]
+              for (a8 in A8set){
+                A9set = A8set[A8set != a8]
+                for (a9 in A9set){
+                  if ((a6 + a7) >= (a7 + a8 + a9))
+                    next
+                  if ((a6 * (a7 + a8 + a9)) != ((a6 + a7)^2))
+                    next
+                  A10set = A9set[A9set != a9]
+                  for (a10 in A10set){
+                    if ((a7 + a8 + a9) >= (a5 + a9 + a10))
+                      next
+                    if ((a6 * (a5 + a9 + a10)) != ((a6 + a7) * (a7 + a8 + a9)))
+                      next
+                    A11set = A10set[A10set != a10]
+                    for (a11 in A11set){
+                      A12set = A11set[A11set != a11]
+                      for (a12 in A12set){
+                        if (a12 >= a10)
+                            next
+                        A13set = A12set[A12set != a12]
+                        for (a13 in A13set){
+                          
+                          if (a11 < a13 && ((a11+a12) * (a13 + a10)) == ((a12 + a13)^2)){
+                            desired_permutation = c(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+                            print(desired_permutation)
+                          }
+
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+
+#Solution 3
+In the following, 1 stands for liar.
+```{r}
+library(HapEstXXR)
+
+n = 16
+ans1 = rep(0,n)
+people = 1:15
+all_subsets = powerset(people)
+for (subset in all_subsets){
+  values = rep(0,n)
+  for (false in subset){
+    values[false] = 1
+  }
+  temp = 0
+  for(i in 1:n){
+    if(i == 1){
+      if (values[i]==0 && (values[n] == 0 || values[i+1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[n] == 1 && values[i+1] == 1)){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && (values[1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && (values[i+1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[i+1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }
+  }
+  if(temp == 0){
+    ans1 = values
+    break
+  }
+}
+print(ans1)
+```
+```{r}
+n = 12
+ans2 = rep(0,n)
+people = 1:n
+all_subsets = powerset(people)
+for (subset in all_subsets){
+  values = rep(0,n)
+  for (false in subset){
+    values[false] = 1
+  }
+  temp = 0
+  for(i in 1:n){
+    if(i == 1){
+      if (values[i]==0 && ((values[n] == 1 && values[i+1] == 1) || (values[n] == 0 && values[i+1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[n] == 1 && values[i+1] == 0) || (values[n] == 0 && values[i+1] == 1))){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && ((values[1] == 1 && values[i-1] == 1) || (values[1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[1] == 1 && values[i-1] == 0) || (values[1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && ((values[i+1] == 1 && values[i-1] == 1) || (values[i+1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[i+1] == 1 && values[i-1] == 0) || (values[i+1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }
+  }
+  if(temp == 0){
+    ans2 = values
+    break
+  }
+}
+print(ans2)
+```
+```{r}
+library(rje)
+n = 8
+four_subsets = combn(1:n, n/2)
+types = rep(0,n)
+values = 
+ans3 = rep(0,n)
+people = 1:n
+all_subsets = powerSet(people)
+for (four_subset_cnt in 1:ncol(four_subsets)){
+  four_subset = four_subsets[, four_subset_cnt]
+  for (subset in all_subsets){
+    values = rep(0,n)
+    for (false in subset){
+      values[false] = 1
+    }
+    temp = 0
+    for (i in 1:n){
+      if (is.element(i, four_subset)){
+        if(i == 1){
+      if (values[i]==0 && ((values[n] == 1 && values[i+1] == 1) || (values[n] == 0 && values[i+1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[n] == 1 && values[i+1] == 0) || (values[n] == 0 && values[i+1] == 1))){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && ((values[1] == 1 && values[i-1] == 1) || (values[1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[1] == 1 && values[i-1] == 0) || (values[1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && ((values[i+1] == 1 && values[i-1] == 1) || (values[i+1] == 0 && values[i-1] == 0))){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && ((values[i+1] == 1 && values[i-1] == 0) || (values[i+1] == 0 && values[i-1] == 1))){
+        temp = 1
+        break
+      }
+    }
+      }else{
+        if(i == 1){
+      if (values[i]==0 && (values[n] == 0 || values[i+1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[n] == 1 && values[i+1] == 1)){
+        temp = 1
+        break
+      }
+    }else if (i == n) {
+      if (values[i]==0 && (values[1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }else{
+      if (values[i]==0 && (values[i+1] == 0 || values[i-1] == 0)){
+        temp = 1
+        break
+      }
+      if (values[i] == 1 && (values[i+1] == 1 && values[i-1] == 1)){
+        temp = 1
+        break
+      }
+    }
+      }
+    }
+    if (temp == 0){
+      ans3 = values
+      for (j in 1:n){
+        if(is.element(j, four_subset))
+          types[j] = 1;
+      }
+      print(ans3)
+      print(types)
+      return()
+    }
+  } 
+}
+```
+The first row shows if a person is liar or not (Liar is 1). <br>
+Second row stands for type of people (1: both my neighbors lie. 0: at least one of my neighbors lie.)
+

@@ -1,0 +1,182 @@
+---
+title: "Sixth Week: Linear Models"
+subtitle: "House price prediction"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/house.jpg"  align = 'center'>
+</div>
+
+```{r}
+library(highcharter)
+library(dplyr)
+library(Hmisc)
+library(psych)
+library(tidyr)
+library(olsrr)
+library(DAAG)
+dic_var = read.delim('dictionnaire_variables.csv',sep = ";") 
+dic_nvx = read.csv("dictionnaire_niveaux.csv") %>% select(1:3) 
+colnames(dic_nvx) <- c("variable", "label", "Type")
+#View(dic_nvx)
+house = read.csv("train.csv")
+#View(house)
+
+```
+
+
+> <p dir="RTL"> 
+با توجه به داده های قیمت منازل
+لطفا با سوالات زیر پاسخ دهید.
+</p>
+
+***
+
+<p dir="LTR">
+1.
+```{r}
+cor_house <- cor(house[sapply(house, is.numeric)], use = "complete.obs")
+print(cor_house)
+cor_test_house <- corr.test(house[sapply(house, is.numeric)], adjust = "none")
+print(cor_test_house$p)
+#View(cor_house)
+```
+by sorting P_VALs, we'll have:
+```{r}
+cor_test_house$p[,"SalePrice"] %>% sort()
+```
+And by sorting COR_COEFFs we will have:
+```{r}
+cor_house[,"SalePrice"] %>% sort(decreasing = T) %>% .[2:11]
+```
+So, these are ten attributes correlated with price:
+```{r}
+imp_vars <- cor_house[,"SalePrice"] %>% sort(decreasing = T) %>% .[2:11] %>% names()
+str(imp_vars)
+print(imp_vars)
+```
+
+
+</p>
+
+***
+
+<p dir="LTR">
+2.
+We draw pairwise scatter plots for all these 10 attributes:
+```{r}
+house_important_atts =  house %>% select(c("Id",imp_vars, "SalePrice"))
+pairs(house %>% select(c(imp_vars)), gap = 0, pch = ".")
+#house_important_atts %>% gather(name_attr, value_attr, OverallQual:YearRemodAdd) %>% hchart("s", hcaes(x = value_attr, y = SalePrice, group = name_attr))
+
+#model <- lm(SalePrice ~ OverallQual + GrLivArea + GarageCars + GarageArea + TotalBsmtSF +X1stFlrSF +FullBath + TotRmsAbvGrd + YearBuilt + YearRemodAdd , data = house_important_atts)
+#print(ols_vif_tol(model))
+
+```
+We can loosely see that there is a linear relation between 5th and 6th (TotalBsmtSF and X1stFlrSF), 5th and 10th (TotalBsmtSF and YearRemodAdd), 6th and 10th (X1stFlrSF and YearRemodAdd), 9th and 10th (YearBuilt and YearRemodAdd), 5th and 9th(TotalBsmtSF and YearBuilt), 6th and 9th(X1stFlrSF and YearBuilt)
+</p>
+
+
+
+***
+
+<p dir="RTL">
+3.
+```{r}
+model <- lm(SalePrice ~ OverallQual + GrLivArea + GarageCars + GarageArea + TotalBsmtSF +X1stFlrSF +FullBath + TotRmsAbvGrd + YearBuilt + YearRemodAdd , data = house_important_atts)
+summary(model)
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+4.
+```{r}
+house_important_atts$predicted_1 <- predict(model)
+house_important_atts$residuals_1 <- residuals(model)
+ggplot(house_important_atts, aes(x = Id, y = SalePrice)) + geom_segment(aes(xend = Id, yend = predicted_1), alpha = 0.4) + geom_point(aes(size = abs(residuals_1), color = abs(residuals_1))) + geom_point(aes(y = predicted_1), shape = 1) + theme_bw()  + scale_color_continuous(low = "pink", high = "red") + ggtitle("Predicted Price and real price")
+
+plot(model)
+```
+Dots are mainly pink and small, meaning they are near their predicted values. So in general we can say our model is good.
+</p>
+
+***
+
+<p dir="LTR">
+5.
+```{r}
+summary(model)
+print(summary(model)$r.squared)
+```
+
+R-squared is 0.7736928. It is a fairly good value (but not a very good one). 
+F-statistic is 495 on 10 and 1449 degrees of freedom. It is a very significant value. This means we can have confidence on the R-squared value. Because high value of R-squared is not because of inherent relations between predictors. 
+</p>
+
+***
+
+<p dir="LTR">
+6.
+We remove GarageArea, FullBath and TotRmsAbvGrd for their big P-values.
+```{r}
+adjusted_model <- lm(SalePrice ~ OverallQual + GrLivArea + GarageCars + TotalBsmtSF +X1stFlrSF + YearBuilt + YearRemodAdd , data = house_important_atts)
+summary(adjusted_model)
+print(summary(adjusted_model)$r.squared)
+```
+There is not a major change in R-squared and F-statistics values.
+
+
+</p>
+
+***
+
+<p dir="RTL">
+7.
+```{r}
+plot(adjusted_model)
+acf(house_important_atts$residuals_1)
+```
+As we can see in "Residuals VS Fitted" plot, for high values, there is a great variance. But for lower values, the variance is somehow fixed. We can say we have constant variance here.
+The Q-Q plot shows that for very small and very high values, prices are not from normal distribution. but for datas with prices not very high or low (which are most of the data), they fit to normal distribution very well. 
+According to ACF plot, the residuals are independent and are not following a recognizable pattern.  
+
+</p>
+
+***
+
+<p dir="LTR">
+8.
+If we have $e = sum (y_i - y'_i)^2$ where $y'$ is predicted price and $y$ is actual price, we will have:
+```{r}
+Cross_validation <- cv.lm(data=house_important_atts, form.lm=adjusted_model, m= 5, plotit = F)
+upp = Cross_validation %>% rowwise() %>% mutate(updif = (cvpred-SalePrice)^2, down = SalePrice^2) 
+error_cross_validation = mean(upp$updif)
+error_cross_validation
+```
+
+</p>
+
+
+***
+
+<p dir="LTR"> 
+10.
+```{r}
+test_data <- read.csv("test.csv")
+ten_data <- predict(model, test_data)
+View(ten_data)
+write.csv(ten_data, "C:\\Users\\hoco\\Desktop\\data analysis\\hw_06\\ouuuuuuuut.csv")
+```
+The score is 0.73 (username: alimof)
+</p>
+
+

@@ -1,0 +1,280 @@
+---
+title: "Third Week: Exploratory Data Analysis"
+author: "student name"
+subtitle: "LaLiga Analysis"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE,comment = "",error = F,message = F,
+                      warning = F,fig.width = 10,fig.height = 6,fig.align = "center")
+library(engsoccerdata)
+library(dplyr)
+library(ggplot2)
+library(highcharter)
+```
+
+1-
+
+```{r}
+rbind(
+  spain %>%
+    select(Season, team = home, opp = visitor, GF = hgoal, GA = vgoal),
+  spain %>%
+    select(Season, team = visitor, opp = home, GF = vgoal, GA = hgoal)
+) %>% mutate(GD = GF-GA) %>% 
+  group_by(team,Season) %>% 
+    summarize(GP = n(),
+            goalsF = sum(GF),
+            goalsA = sum(GA),
+            goaldif = sum(GD),
+            W = sum(GD>0),
+            D = sum(GD==0),
+            L = sum(GD<0)
+  ) %>% 
+  mutate(score = W*3 + D) %>%
+  arrange(Season,desc(score),desc(goaldif),desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  mutate(rank = row_number(-score) %>% as.integer()) -> lig
+lig %>% group_by(team) %>% 
+  summarise(champ_num = sum(rank==1)) %>% 
+  arrange(desc(champ_num)) -> f_lig
+f_lig
+
+#### plot
+f_lig %>% 
+  hchart(type = "column",hcaes(x = team, y = champ_num),name = "score")
+f_lig %>%
+  ggplot()+geom_bar(aes(x = team , y = champ_num) , stat = "identity")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+
+2- 
+
+
+```{r}
+lig <- ungroup(lig)
+lig %>% group_by(team) %>% 
+  summarise(kesel = sum(goalsF))%>% 
+  arrange(kesel) %>% 
+  slice(1:10) -> kesel_team
+kesel_team %>% 
+   hchart(type = "column",hcaes(x = team, y = kesel ),name = "score")
+
+lig %>% 
+  group_by(Season) %>%
+  summarise(kesel = sum(goalsF + goalsA)) %>% 
+  arrange(kesel) %>% 
+  slice(1:10) -> kesel_season
+kesel_season %>% 
+   hchart(type = "column",hcaes(x = Season, y = kesel ),name = "score")
+
+```
+
+3- 
+
+
+```{r}
+rbind(
+  spain %>%
+    select(Date ,Season, team = home, opp = visitor, GF = hgoal, GA = vgoal),
+  spain %>%
+    select(Date ,Season, team = visitor, opp = home, GF = vgoal, GA = hgoal)
+) %>% mutate(GD = GF-GA) %>%  
+    mutate(W = ifelse(GD > 0,1,0),
+    D = ifelse(GD == 0,1,0),
+    L = ifelse(GD < 0,1,0)
+) %>% group_by(Season,team) %>%
+  arrange(Date) %>% 
+  mutate(play = row_number(Date)) -> season
+  season %>% group_by(Season,team) %>% 
+    mutate(goalsF = cumsum(GF),
+      goalsA = cumsum(GA),
+      goaldif = cumsum(GD),
+      W = cumsum(W),
+      D = cumsum(D),
+      L = cumsum(L)
+  ) %>% 
+  mutate(score = W*3 + D) %>% arrange(team,play) -> history
+########### finds final leag
+  history %>% 
+  filter(play == max(play)) %>% 
+  arrange(Season,desc(score),desc(goaldif),desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  mutate(rank = row_number(-score) %>% as.integer()) %>% 
+  filter(rank ==1 ) %>% 
+  select(Season,team) -> lig_final
+######### find 
+history %>% 
+  filter(play == max(play)/2) %>% 
+  arrange(Season,desc(score),desc(goaldif),desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  mutate(rank = row_number(-score) %>% as.integer()) %>% 
+  filter(rank == 1 ) %>% 
+  select(Season,team)-> lig_nim
+
+sum(lig_nim$team == lig_final$team)/nrow(lig_final)
+
+```
+ i find lig_nim and lig_final table and find winner of each in each season . then campare them :)
+
+
+4- 
+to find black cat i will find teams that can win 4 best teams in one season . (Real Madrid , Fc barcelona , Athletic Bilbao , Atletico Madrid) . 
+actully each team had 8 game with these  that if can win 4 of them it will be black cat in my opinion :)
+
+```{r}
+#### creat new list that in each row we just see the result of that game not sum of all games played by that team.
+rbind(
+  spain %>%
+    select(Date , Season, team = home, opp = visitor, GF = hgoal, GA = vgoal),
+  spain %>%
+    select(Date , Season, team = visitor, opp = home, GF = vgoal, GA = hgoal)
+) %>% mutate(GD = GF-GA) %>%  
+    mutate(W = ifelse(GD > 0,1,0),
+    D = ifelse(GD == 0,1,0),
+    L = ifelse(GD < 0,1,0)
+) %>% arrange(Date) -> win_table
+
+win_table %>% 
+  filter((Season<=2010) & (Season>=2001)) %>% 
+  group_by(Season) %>% 
+  filter((opp %in% c("FC Barcelona","Athletic Bilbao","Real Madrid","Atletico Madrid"))) %>% 
+  filter(!(team %in% c("FC Barcelona","Athletic Bilbao","Real Madrid","Atletico Madrid"))) %>% 
+  group_by(team,Season) %>%
+  summarise(big_team_win = sum(W)) %>% 
+  arrange(-big_team_win)
+  
+```
+
+as you can see "Villarreal CF" win 6 of 8 game with big team on 2007 suddenly without before achivment . Real Sociedad with 5 wining is another black cat team . 
+you can verify "Sevilla FC" and "CA Osasuna" but they repeat their achivment maybe they can not be black cat .
+
+
+5- 
+```{r}
+history %>%
+  arrange(Season,desc(score),desc(goaldif),desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  mutate(m_play = max(play))%>% 
+  group_by(Season,play) %>% 
+  mutate(rank_play = row_number(-score) %>% as.integer()) %>% 
+  filter(sort(score,decreasing=T)[1]-sort(score,decreasing=T)[2] > (3*(m_play-play)))%>% 
+  arrange(wini_diff = -m_play + play) %>% 
+  filter(rank_play==1) %>% slice(1)
+```
+
+```{r}
+  history %>% 
+  filter(play == max(play)) %>% 
+  arrange(Season,desc(score),desc(goaldif),desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  summarize(winner_diff = sort(score,decreasing=T)[1]-sort(score,decreasing=T)[2]) -> 
+  win_diff_sea
+
+  ### find season with max winner diffrention :)
+lig_final$team[which.max(win_diff_sea$winner_diff)]
+    
+```
+
+
+
+
+6- 
+
+```{r}
+####### find max repeated seq in x vector
+find_max_rep <- function(x){
+  max_rep <- 1;
+  rep <- 1;
+  for (i in 1:(length(x)-1)){
+    if ((x[i] == 1) && (x[i+1] == 1))
+      rep <- rep + 1
+    else{
+      if(rep > max_rep){
+        max_rep <- rep
+      }
+      rep <- 1
+    }
+  }
+  if(rep > max_rep){
+        max_rep <- rep
+      }
+  return(max_rep)
+}
+
+  
+
+```
+here i will find bigest replicated seq in wining :and then find best team
+```{r}
+win_table %>% 
+  group_by(team) %>% 
+  summarise(count = find_max_rep(W)) %>% 
+  arrange(-count) %>% 
+  slice(1)
+
+```
+for DEFEAT :
+```{r}
+win_table %>% 
+  group_by(team) %>% 
+  summarise(count = find_max_rep(L)) %>% 
+  arrange(-count) %>% 
+  slice(1)
+```
+for EQUAL :
+```{r}
+win_table %>% 
+  group_by(team) %>% 
+  summarise(count = find_max_rep(D)) %>% 
+  arrange(-count) %>% 
+  slice(1)
+
+```
+
+
+
+7- 
+
+
+```{r}
+history %>%
+  arrange(Season,desc(score),desc(goaldif),desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  mutate(m_play = max(play))%>% 
+  group_by(Season,play) %>% 
+  mutate(rank_play = row_number(-score) %>% as.integer()) %>% 
+  filter(sort(score)[4]-sort(score)[1] > (3*(m_play-play)))%>% 
+  arrange(wini_diff = - m_play + play)  %>% 
+  filter(rank_play == max(rank_play)) %>% 
+  .[1,]                            
+  
+```
+
+
+
+
+
+8- 
+```{r}
+history %>%
+  filter(Season==1998) %>% 
+  arrange(Season,desc(score),desc(goaldif),desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  mutate(m_play = max(play))%>% 
+  group_by(Season,play) %>% 
+  mutate(rank_play = row_number(-score) %>% as.integer()) -> week_tbl
+
+week_tbl  %>% arrange(play) %>% 
+  hchart(type = "line",hcaes(x = play, y = rank_play, group = team))
+
+```

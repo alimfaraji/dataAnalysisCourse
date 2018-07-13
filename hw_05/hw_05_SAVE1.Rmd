@@ -1,0 +1,119 @@
+---
+title: "Fifth Week: Bootstrap and Resampling Methods"
+subtitle: "Nonparametric Hypothesis tests"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+```{r}
+library(coin)
+library(ggplot2)
+```
+
+
+***
+
+<p dir="RTL">
+1.
+
+```{r}
+aaaa <- c(102, 300, 102, 100, 205, 105, 71 , 92)
+chisq.test(aaaa)
+```
+So their sales are different.
+
+</p>
+
+***
+
+<p dir="RTL">
+2. 
+```{r}
+x = c(50, 50, 60, 70, 75, 80, 90, 85)
+y = c(55, 75, 80, 90, 105, 65)
+a = c(50, 50, 60, 70, 75, 80, 90, 85, 55, 75, 80, 90, 105, 65)
+b = as.factor(c(rep(0, 8), rep(1, 6)))
+c = data.frame(a = a, b = b)
+wilcox.test(x, y, exact = T, paired = F)
+```
+Here we can not reject the null hypothesis. So we can not say there is a significant difference between modern and traditional branches.
+</p>
+
+
+***
+
+<p dir="RTL">
+3. 
+```{r}
+a = c(509, 517, 502, 629, 830, 911, 847, 803, 727, 853, 757, 730, 774, 718, 904)
+b = c(517, 508, 523, 730, 821, 940, 818, 821, 842, 842, 709, 688, 787, 780, 901)
+d = data.frame(dat = c(a, b), cat = as.factor(c(rep(0, 15), rep(1, 15))))
+c = data.frame(a = a, b = b)
+wilcox.test(a, b, paired = T)
+```
+Here we can not say that the advertisement was effective.
+</p>
+
+***
+
+<p dir="RTL">
+4.
+```{r}
+four_data = data.frame(dat = c(510, 720, 930, 754, 105, 925, 735, 753, 685, 730, 745, 875, 610), att = c('s' ,'s' ,'s' ,'s' ,'s' ,'m' ,'m' ,'m' ,'m' ,'l' ,'l' ,'l' ,'l'))
+coin::oneway_test(dat~att, data = four_data)
+```
+We can not say that the color is a major factor.
+***
+
+<p dir="RTL">
+5.
+```{r}
+tv_data = read.csv("C:\\Users\\hoco\\Desktop\\data analysis\\hw_05\\data\\tv.csv")
+tv_data_mat = as.matrix(tv_data, byrow = T)
+friedman.test(tv_data_mat)
+```
+We can not say that the advertisement was effective.
+</p>
+
+
+***
+
+<p dir="RTL"> 
+6.
+```{r}
+six_data = data.frame(pop = c(151, 252,603, 802, 603, 405, 753, 55, 408), att = c('s', 's', 's', 'm', 'm', 'm', 'l','l', 'l'))
+ssix_data = matrix(c(151, 252,603, 802, 603, 405, 753, 55, 408), ncol = 3)
+chisq.test(ssix_data)
+```
+So the population affects the sales.
+</p>
+
+***
+
+<p dir="RTL"> 
+7.
+```{r}
+consumption_data = read.csv("C:\\Users\\hoco\\Desktop\\data analysis\\hw_05\\data\\consumption.csv")
+cor.test(consumption_data$A, consumption_data$B, method = "spearman")
+```
+Yes, there is relation between the consumption of these two products.
+</p>
+
+***
+
+<p dir="RTL"> 
+8.
+```{r}
+eigth_data = data.frame(male = c(301, 353, 558), female = c(502, 155, 153))
+eight_datas = matrix(c(301, 353, 558, 502, 155, 153), ncol = 2)
+chisq.test(eight_datas)
+```
+So sex is important!
+</p>
+
+
+

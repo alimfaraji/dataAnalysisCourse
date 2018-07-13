@@ -1,0 +1,162 @@
+---
+title: "second week: Introduction to R and Rstudio"
+subtitle: "Mobile Data"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/smartphones.jpg"  align = 'center'>
+</div>
+
+***
+
+<p dir="LTR">
+1
+```{r}
+library(dplyr)
+library(ggplot2)
+mobile_dataset = read.csv("mobile_data.csv")
+mobile_countPerCompany = mobile_dataset %>% group_by(company) %>% summarize(count = n())
+mobile_countPerCompany = mobile_countPerCompany[order(-mobile_countPerCompany$count),][1:20,]
+mobile_countPerCompany = mobile_dataset[mobile_dataset$company %in% mobile_countPerCompany$company,]["company"]
+plot_mobile_countPerCompany = ggplot(mobile_countPerCompany, aes(company)) + geom_bar() + coord_flip() + ylab("number of cell-phones") + ggtitle("Number of cellphones for 20 most productive companies")
+plot_mobile_countPerCompany
+
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+2
+```{r}
+ggplot(mobile_dataset, aes(x = year, y = dim_length)) + geom_point(color = "blue", alpha = 0.4) + geom_smooth(method = "lm") + ylab("lenght") + ggtitle("Length of cellphones in different years")
+ggplot(mobile_dataset, aes(x = year, y = dim_breadth)) + geom_point(color = "red", alpha = 0.4) + geom_smooth(method = "lm") +
+  ylab("breadth") + ggtitle("Breadth of cellphones in different years")
+ggplot(mobile_dataset, aes(x = year, y = dim_thickness)) + geom_point(color = "green", alpha = 0.4) + geom_smooth(method = "lm") +
+  ylab("thickness") + ggtitle("Thickness of cellphones in different years")
+ggplot(mobile_dataset, aes(x = year, y = cam_px)) + geom_point(color = "brown", alpha = 0.4) + geom_smooth(method = "lm") + ylab("camera pixel") + ggtitle("Camera pixel of cellphones in different years")
+
+
+```
+</p>
+
+***
+
+<p dir="LTR">
+3
+```{r}
+price_mean_byLTEandSimnum = mobile_dataset %>% group_by(LTE, sim_no) %>% summarise(ave_price = mean(price, na.rm = T))
+ggplot(price_mean_byLTEandSimnum, aes(x = sim_no, y = ave_price)) + geom_bar(stat='identity', aes(fill = LTE), position = "dodge") + xlab("number of Simcards") + ylab("average price") + ggtitle("Average price of cellphones by LTE and number of simcards")
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+4
+```{r}
+thickness_mobile = mobile_dataset[which(mobile_dataset$year == 2017),]
+ggplot(thickness_mobile, aes(audio_jack, dim_thickness)) + geom_boxplot(aes(color = audio_jack, fill = audio_jack)) + xlab("Audio jack") + ylab("thickness of cellphone") + ggtitle("Box plot: Thickness of 2017 cellphones by audio jack") + theme(legend.position = "none")
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+5
+```{r}
+ppi_mobile_dataset = mobile_dataset
+ppi_mobile_dataset$ppi <- with(mobile_dataset, sqrt(px_row^2 + px_col^2)/display_size)
+ggplot(ppi_mobile_dataset, aes(ppi)) + geom_histogram(binwidth = 5, fill = "blue") + ylab("number of cellphones") + ggtitle("Number of cellphones for different PPIs") + xlab("PPI")
+ppi_per_year = ppi_mobile_dataset %>% group_by(year) %>% summarise(mean = mean(ppi, na.rm = T))
+ggplot(ppi_per_year, aes(year, mean)) + geom_bar(stat = "identity", aes(fill = year)) + theme(legend.position = "none") + ylab("average PPI") + ggtitle("Average PPI of cellphones in years")
+max_ppi_mobile = ppi_mobile_dataset[which.max(ppi_mobile_dataset$ppi),]
+print(max_ppi_mobile)
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+6
+```{r}
+nokia_mobile_dataset = mobile_dataset[which(mobile_dataset$company == "Nokia" & mobile_dataset$year < 2010 & mobile_dataset$dim_length>0 & mobile_dataset$dim_breadth>0 & mobile_dataset$dim_thickness>0 & mobile_dataset$weight),]
+nokia_mobile_dataset$gooshkoobiat =  with(nokia_mobile_dataset, weight/((dim_length/10) * (dim_breadth/10) * (dim_thickness/10)))
+nokia_mobile_dataset = nokia_mobile_dataset[order(-nokia_mobile_dataset$gooshkoobiat),]
+mmm = max(nokia_mobile_dataset$gooshkoobiat)
+nokia_mobile_dataset$gooshkoobiat =  nokia_mobile_dataset$gooshkoobiat/mmm
+ggplot(nokia_mobile_dataset[1:10,], aes(x = device, y = gooshkoobiat)) + geom_bar(stat = "identity") + coord_flip() + ggtitle("10 most Nokia gooshkoob cellphones") 
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+7
+```{r}
+density_mobile_dataset = mobile_dataset[which(mobile_dataset$dim_length>0 & mobile_dataset$dim_breadth>0 & mobile_dataset$dim_thickness>0 & mobile_dataset$weight),]
+density_mobile_dataset$density = with(density_mobile_dataset, weight/((dim_length/10) * (dim_breadth/10) * (dim_thickness/10)))
+mobiles_density_LTWater = density_mobile_dataset[density_mobile_dataset$density < 1,]
+density_mobile_dataset = density_mobile_dataset[order(density_mobile_dataset$density),]
+ggplot(density_mobile_dataset[density_mobile_dataset$density<2.5,], aes(density)) + geom_histogram(binwidth = 0.01, fill = "blue") +  geom_vline(xintercept=1, color = "red", size = 1.5) + ggtitle("Number of cellphones for different densities") 
+```
+
+The red line is density of water, so all the mobiles on the left side of the red line have density less than 1. All these mobiles are in "mobiles_density_LTWater" data frame.
+</p>
+
+***
+
+<p dir="LTR">
+8
+```{r}
+ggplot (mobile_dataset[which(mobile_dataset$weight < 1000),], aes(x = weight, y = battery_mah)) + geom_point(color = "blue", alpha = 0.4) + ylab("battery value") + ggtitle("Battery value by weight")
+cor(mobile_dataset[,"weight"], mobile_dataset[,"battery_mah"], use = "pairwise.complete.obs")
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+9
+```{r}
+samsung_mobile_dataset = mobile_dataset[which(mobile_dataset$company == "Samsung"),]
+samsung_parchamdar = samsung_mobile_dataset %>% group_by(year) %>% top_n(1, price)
+ggplot(samsung_parchamdar, aes(x = year, y = price, label = device)) + geom_point(color = "blue") + geom_text(aes(label=device),hjust=0, vjust=0)
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+10
+```{r}
+OS_numberOfCellphones = mobile_dataset %>% group_by(os_type) %>% summarise(count = n())
+#View(OS_numberOfCellphones)
+ggplot (OS_numberOfCellphones, aes(os_type, count)) + geom_bar(stat = "identity", aes(fill = os_type)) + coord_flip() + ggtitle("Number of cellphones for different OS") + xlab("OS type") + ylab ("number of cellphones")
+```
+Also it is well known that Android is dominated, it is interesting to know what are the next dominated OSs. 
+
+```{r}
+ggplot(mobile_dataset, aes(cam_px)) + geom_histogram(binwidth = 2, aes(y = ..density..) , fill = "purple") + geom_density(color = "gold", size = 1.5) + ggtitle("Histogram of camera pixel") + xlab("camera pixel") + ylab("number of cellphones")
+```
+The density function is very amusing.
+
+```{r}
+ggplot(mobile_dataset[which(mobile_dataset$price < 2000),], aes(x = price, y = cam_px)) + geom_point(aes(color = year)) + ylab("camera pixel") + ggtitle("camera pixel of cellphones by price and year")
+```
+Although in recent years it has been tried, but the trend of very high quality cameras (more than 25 mp) did not success. And camera quaility is not a key element of price.  
+</p>
+

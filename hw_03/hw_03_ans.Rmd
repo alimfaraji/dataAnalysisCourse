@@ -1,0 +1,228 @@
+---
+title: "Third Week: Exploratory Data Analysis"
+subtitle: "LaLiga Analysis"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/laliga-lo.jpg"  align = 'center'>
+</div>
+
+***
+
+<p dir="LTR">
+1.
+```{r}
+library(engsoccerdata)
+library(dplyr)
+library(ggplot2)
+library(highcharter)
+rbind(
+  spain %>%
+    select(Season, team = home, opp = visitor, GF = hgoal, GA = vgoal),
+  spain %>%
+    select(Season, team = visitor, opp = home, GF = vgoal, GA = hgoal)
+) %>% mutate(GD = GF-GA) %>% 
+  group_by(team,Season) %>% 
+    summarize(GP = n(),
+            goalsF = sum(GF),
+            goalsA = sum(GA),
+            goaldif = sum(GD),
+            W = sum(GD>0),
+            D = sum(GD==0),
+            L = sum(GD<0)
+  ) %>% 
+  mutate(score = W*3 + D) %>%
+  arrange(Season,desc(score), desc(goaldif), desc(goalsF)) %>% 
+  group_by(Season) %>% 
+  mutate(rank = row_number(-score) %>% as.integer()) %>% ungroup -> spainLeg 
+  spainLeg %>% group_by(team) %>% summarise(champion_num = sum(rank == 1)) %>% arrange(-champion_num) %>% hchart(type = "column", hcaes(x = team, y = champion_num), name = "champions")
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+A boring team is a team with low goalsF + goalsA.
+```{r}
+spainLeg  %>% group_by(team) %>% summarise(boreTeam = sum(goalsF) + sum(goalsA)) %>% arrange(boreTeam) %>% slice(1:10) %>% 
+hchart( type = "column", hcaes (x = team, y = boreTeam), name = "boring teams")
+```
+A boring season is a season with low goals.
+```{r}
+spainLeg %>% group_by(Season) %>% summarise(boreSeason = sum(goalsF)) %>% arrange(boreSeason) %>% slice(1:10) %>% hchart(type = "column", hcaes(x = Season, y = boreSeason), name = "boring seasons")
+```
+
+</p>
+
+***
+3.
+<p dir="LTR">
+```{r}
+rbind(
+  spain %>%
+    select(Season, team = home, opp = visitor, GF = hgoal, GA = vgoal, Date = Date),
+  spain %>%
+    select(Season, team = visitor, opp = home, GF = vgoal, GA = hgoal, Date = Date)
+) %>% mutate(GD = GF-GA) %>%  
+    mutate(W = ifelse(GD > 0,1,0),
+    D = ifelse(GD == 0,1,0),
+    L = ifelse(GD < 0,1,0)
+) %>% group_by(team, Season) %>% arrange(Date) %>% 
+  mutate(play = row_number(Season)) -> season
+  season %>% group_by(team, Season) %>% 
+    mutate(goalsF = cumsum(GF),
+      goalsA = cumsum(GA),
+      goaldif = cumsum(GD),
+      W = cumsum(W),
+      D = cumsum(D),
+      L = cumsum(L),
+  ) %>%
+  mutate(score = W*3 + D) %>% arrange(team,play) -> spainStory
+  View(spainStory)
+  
+  spainStory %>% filter(play == max(play)) %>% arrange(-score, -GD, -goalsF) %>% group_by(Season) %>% mutate (rank = row_number(-score) %>% as.integer()) %>% filter(rank == 1) %>%  arrange(Season) -> final_champ
+  View(final_champ)
+  
+  spainStory %>% filter(play == max(play)/2) %>% arrange(-score, -GD, -goalsF) %>% group_by(Season) %>% mutate (rank = row_number(-score) %>% as.integer()) %>% filter(rank == 1) %>%  arrange(Season) -> mid_champ
+  View(mid_champ)
+  
+percent = sum(mid_champ$team == final_champ$team)/nrow(mid_champ)
+percent
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+4.
+We consider a team who wins 4 powerful teams (Real Madrid, FC Barcelona, Atletico Madrid, Athletic Bilbao) in total at least 4 times to be "GORBE SIAH".
+```{r}
+spainStory %>% filter(Season > 2000 & Season < 2011 & (team != "Real Madrid" & team != "FC Barcelona" & team != "Atletico Madrid" & team != "Athletic Bilbao") & (opp == "Real Madrid" | opp == "FC Barcelona" | opp == "Atletico Madrid" | opp == "Athletic Bilbao")) %>%  arrange(Season, play) %>% group_by(Season, team) %>% mutate(siahi = sum(GD>0)) %>% filter(siahi> 3) %>% group_by(Season, team) %>% summarise(siahi = max(siahi))  %>% arrange(Season, siahi, team) %>% ggplot(aes(x = Season, y = siahi)) + geom_bar(stat = "identity", aes(fill = team))
+
+
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+5.
+```{r}
+spainStory %>% group_by(Season) %>% arrange(-score, -GD, -goalsF) %>% group_by(Season) %>% mutate(plays_still = max(play) - play) %>% group_by(Season, play) %>% mutate(rank = row_number(-score) %>% as.integer()) %>% filter(rank == 1 | rank == 2) %>% group_by(Season, play) %>%  arrange(Season, play, rank) %>% group_by(Season, play) %>% mutate(diff = max(score) - min(score)) %>% group_by(Season) %>% mutate(isChamp = (diff > 3 * (max(play) - play))) %>% filter(isChamp == TRUE) %>% ungroup() %>%  top_n(1, plays_still) %>% filter(rank == 1) -> tmp
+tmp
+
+spainStory %>% group_by(Season) %>% filter(play == max(play)) %>% arrange(-score, -GD, -goalsF) %>% group_by(Season) %>% mutate(rank = row_number(-score) %>% as.integer()) %>% filter(rank == 1 | rank == 2) %>% arrange(Season, rank) %>% group_by(Season) %>% mutate(diff = max(score) - min(score)) %>% ungroup() %>% top_n(1, diff) %>% filter(rank == 1) -> moghtader_champ
+moghtader_champ
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+6.
+```{r}
+max_rep <- function(vectorC){
+  cnt = 0
+  max_cnt = 0
+  for (x in vectorC){
+    if(x == 1)
+      cnt = cnt + 1
+    max_cnt = max(max_cnt, cnt)
+    if (x!=1)
+      cnt = 0
+  }
+  return (max_cnt)
+}
+```
+Win:
+```{r}
+spainStory %>% mutate(Win = ifelse(GD>0, 1, 0)) %>% group_by(team) %>% summarise(c = max_rep(Win)) %>% arrange(-c) %>% slice(1) -> tmp
+tmp
+```
+Draw:
+```{r}
+spainStory %>% mutate(Draw = ifelse(GD == 0, 1, 0)) %>% group_by(team) %>% summarise(c = max_rep(Draw)) %>% arrange(-c) %>% slice(1) -> tmp
+tmp
+```
+Lose:
+```{r}
+spainStory %>% mutate(Lose = ifelse(GD < 0, 1, 0)) %>% group_by(team) %>% summarise(c = max_rep(Lose)) %>% arrange(-c) %>% slice(1) -> tmp
+tmp
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+7.
+```{r}
+spainStory %>% arrange(score, GD, goalsF) %>% group_by(Season, play) %>% mutate(rank = row_number(score) %>% 
+as.integer()) %>% group_by(Season) %>% mutate(play_still = max(play) - play, max_play = max(play)) %>% group_by(Season, play) %>% mutate(diff = sort(score)[4] - sort(score)[1]) %>% filter(diff > (max_play - play )* 3) %>% arrange(-play_still) %>% filter(rank == 1) %>% ungroup() %>% top_n(1, play_still) -> tmp
+tmp
+
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+8.
+```{r}
+spainStory %>% filter(Season == 1998) %>% arrange(-score, -GD, -goalsF) %>% group_by(play) %>% mutate(rank = row_number(-score) %>% as.integer()) %>% arrange(play) %>% hchart(type = "line", hcaes(x = play, y = rank, group = team))
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+9.
+```{r}
+library(wesanderson)
+
+rbind(
+  spain %>%
+    select(Season, team = home, opp = visitor, result = HT),
+  spain %>%
+    select(Season, team = visitor, opp = home, result = FT)
+) %>% filter(Season == 2012) %>% ggplot(aes(x = team, y = opp)) + geom_tile(fill = wes_palette(n = 3, name = "GrandBudapest")[1], alpha = 0.4, color = wes_palette(n = 3, name = "GrandBudapest")[3]) + geom_text(aes(label = result), color = "white", size = 3) + theme(axis.text.x=element_text(angle=90, hjust=1))
+
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+10.
+mean of a team's score:
+```{r}
+library("ggthemes")
+library("scales")
+spainStory %>% group_by(Season) %>% filter(play == max(play)) %>% group_by(team) %>% summarise(mean_score = mean(score)) %>% arrange(mean_score) %>% ggplot(aes(x = reorder(team, mean_score), y = mean_score)) + geom_bar(stat = "identity", aes(fill = mean_score)) + theme_minimal() + theme(axis.text.x=element_text(angle=90, hjust=1), legend.position="none") + xlab("team name") + ylab("mean of a team's score")
+
+```
+
+mean of a team's rank:
+```{r}
+spainStory %>% arrange(-score, -GD, -goalsF) %>% group_by(Season, play) %>% mutate(rank = row_number(-score) %>%  as.integer()) %>% group_by(Season) %>% filter(play == max(play)) %>% group_by(team) %>% summarise(mean_rank = mean(rank)) %>% ggplot(aes(x = reorder(team, -mean_rank), y = mean_rank)) + geom_bar(stat = "identity", aes(fill = -mean_rank)) + theme_minimal() + theme(axis.text.x=element_text(angle=90, hjust=1), legend.position="none") + xlab("team name") + ylab("mean of a team's rank")
+```
+
+Variance of a team's rank:
+```{r}
+spainStory %>% arrange(-score, -GD, -goalsF) %>% group_by(Season, play) %>% mutate(rank = row_number(-score) %>%  as.integer()) %>% group_by(Season) %>% filter(play == max(play)) %>% group_by(team) %>% summarise(mean_rank = var(rank)) %>% ggplot(aes(x = reorder(team, -mean_rank), y = mean_rank)) + geom_bar(stat = "identity", aes(fill = -mean_rank)) + theme_minimal() + theme(axis.text.x=element_text(angle=90, hjust=1), legend.position="none") + xlab("team name") + ylab("variance of a team's rank")
+```
+
+</p>
