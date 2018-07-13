@@ -1,0 +1,120 @@
+---
+title: "Create Map"
+subtitle: "Earthquake Analysis"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/eqs003-001-2.png"  align = 'center'>
+</div>
+
+> <p dir="RTL"> 
+با استفاده از داده های زلزله ها در ایران و جهان به سوالات زیر پاسخ دهید.
+</p>
+
+```{r}
+library(plotly)
+historical_web_data = readRDS("data\\historical_web_data_26112015.rds")
+disaster = read_delim("data\\disaster.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+iran_earthquake = readRDS("data\\iran_earthquake.rds")
+iran_map = read_rds("data\\Tehrn_map_6.rds")
+head(iran_earthquake)
+
+```
+
+***
+
+<p dir="LTR">
+1.
+```{r}
+plot1 <- plot_ly(historical_web_data, x = ~Latitude, y = ~Longitude, z = ~Depth, color = ~Magnitude, sizes = c(5, 550), size = ~Magnitude)
+plot1
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+2.
+```{r}
+disaster %>% filter(FLAG_TSUNAMI == "Tsu") %>% 
+rename(lat = LATITUDE,lon = LONGITUDE, z = DEATHS,name = COUNTRY,sequence = YEAR) %>% 
+  select(lat, lon, z, name, sequence) -> dis 
+hcmap() %>% 
+  hc_add_series(data = dis, type = "mapbubble",
+                minSize = 0, maxSize = 30)  %>% 
+  hc_plotOptions(series = list(showInLegend = FALSE))
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+3.
+```{r}
+iran_big_earthquakes <- iran_earthquake %>% filter(Mag> 5)
+View(iran_big_earthquakes)
+ggmap(iran_map) +  geom_point(aes(x = Long, y = Lat, size = Mag), data = iran_big_earthquakes,  alpha = .5, color="darkred") + geom_density_2d()
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+4.
+
+</p>
+
+
+***
+
+<p dir="RTL">
+5.
+```{r}
+
+```
+
+</p>
+
+<div align="center">
+<img  src="images/jvector.png"  align = 'center'>
+</div>
+
+***
+
+<p dir="RTL">
+۶. با استفاده از داده لرزه های بزرگ و به وسیله طول، عرض، شدت، عمق مدلی برای پیش بینی تعداد کشته های زلزله بیابید.
+</p>
+
+***
+
+<p dir="RTL">
+۷. با استفاده از داده worldwide.csv به چند سوال زیر پاسخ دهید. تحقیق کنید آیا می توان از پیش لرزه، زلزله اصلی را پیش بینی کرد؟
+</p>
+
+***
+
+<p dir="RTL">
+۸. گزاره " آیا شدت زلزله به عمق آن بستگی دارد" را تحقیق کنید؟ (طبیعتا از آزمون فرض باید استفاده کنید.)
+</p>
+
+***
+
+<p dir="RTL"> 
+۹. میانگین سالانه زلزله ها را بر حسب کشور به دست آورید. آیا میتوان دلیلی در تایید یا رد تئوری هارپ ارائه کرد.
+</p>
+
+***
+
+<p dir="RTL"> 
+۱۰. سه حقیقت جالب در مورد زلزله بیابید.
+</p>
+

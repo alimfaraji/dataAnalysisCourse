@@ -1,0 +1,167 @@
+---
+title: "Create Map"
+subtitle: "Earthquake Analysis"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/eqs003-001-2.png"  align = 'center'>
+</div>
+
+
+```{r}
+library(dplyr)
+library(plotly)
+library(ggmap)
+library(ggplot2)
+library(highcharter)
+library(readr)
+
+historical_web_data = readRDS("data\\historical_web_data_26112015.rds")
+disaster = read_delim("data\\disaster.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+iran_earthquake = readRDS("data\\iran_earthquake.rds")
+iran_map = read_rds("data\\Tehrn_map_6.rds")
+worldwide = read.csv("data\\worldwide.csv")
+```
+
+***
+
+<p dir="LTR">
+1.
+```{r}
+plot1 <- plot_ly(historical_web_data, x = ~Latitude, y = ~Longitude, z = ~Depth, color = ~Magnitude, sizes = c(5, 550), size = ~Magnitude)
+plot1
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+2.
+```{r}
+
+disaster %>% filter(FLAG_TSUNAMI == "Tsu") %>% 
+rename(lat = LATITUDE,lon = LONGITUDE, z = EQ_PRIMARY,name = COUNTRY,sequence = YEAR)  %>% 
+  select(lat, lon, name,  z) -> dis 
+hcmap() %>% 
+  hc_add_series(data = dis, type = "mapbubble",
+                minSize = 0, maxSize = 30)  %>% 
+  hc_plotOptions(series = list(showInLegend = FALSE))
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+3.
+```{r}
+iran_big_earthquakes <- iran_earthquake %>% filter(Mag> 5)
+#View(iran_big_earthquakes)
+ggmap(iran_map) +  geom_point(aes(x = Long, y = Lat, size = Mag), data = iran_big_earthquakes,  alpha = .5, color="darkred") + geom_density_2d()
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+5.
+```{r}
+firstup <- function(x) {
+   substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+x
+}
+
+disaster %>% filter(is.na(FLAG_TSUNAMI)) %>% rowwise() %>% mutate(cCOUNTRY = firstup(tolower(COUNTRY))) %>% group_by(cCOUNTRY) %>% summarise(LATITUDE = mean(LATITUDE, na.rm = T), LONGITUDE = mean(LONGITUDE, na.rm = T), numbers = n(), death_sum = sum(DEATHS, na.rm =  T)) %>% rowwise() %>% mutate(meann = death_sum/numbers) -> data5
+View(data5)
+hcmap(data = data5, value = "death_sum", joinBy = c("name", "cCOUNTRY")) 
+```
+
+</p>
+
+
+***
+
+<p dir="RTL">
+6.
+```{r}
+disaster %>% filter(is.na(FLAG_TSUNAMI)) %>% select(id = I_D, lat = LATITUDE, long = LONGITUDE, death = DEATHS, foc = FOCAL_DEPTH, intensity = INTENSITY) -> data6
+fit = lm(death ~lat + long + foc + intensity, data = data6)
+print(summary(fit))
+```
+We can see the coefficients in the summary of the fit model. 
+***
+
+
+</p>
+
+***
+
+<p dir="RTL">
+8.
+```{r}
+View(worldwide)
+depth_worldwide = worldwide$depth
+mag_worldwide= worldwide$mag
+cor.test(depth_worldwide, mag_worldwide)
+```
+As we can see the P_value for H0 (correlation between depth and mag is 0) is very low. So we can reject the null hypothesis and conclude that there is a correlation between depth and magnitude.
+</p>
+
+***
+
+<p dir="RTL">
+9.
+```{r}
+View(disaster)
+library(stringr)
+View(worldwide)
+worldwide %>% rowwise() %>% mutate(year = unlist(str_split(time, "-"))[1], country = unlist(str_split(place, ","))[2]) %>% filter(type == "earthquake") %>% group_by(country, year) %>% summarise(numbers = n()) %>% group_by(country) %>% summarise(summs = sum(numbers), nn = n(), mean_by_year = sum(numbers)/n()) %>% arrange(-mean_by_year) %>% slice(1:60) -> data9
+data9 %>%  ggplot() + geom_bar(aes(x = reorder(country, mean_by_year), y = mean_by_year), stat = "identity") + theme(axis.text.x = element_text(angle = 90))
+```
+These are only 60 countries with most earthquakes. We can see that even some U.S. states have more earthquakes than iran. Also countries like Japan and New Zealand which are allies of the U.S. have high earthquake rates. And not all of the enemies of U.S. are in the chart. So we can reject the Harp theory. 
+</p>
+
+***
+
+<p dir="RTL"> 
+10.
+We check if there is a relation between mag and gap of an earthquake.
+</p>
+```{r}
+gap_worldwide = worldwide$gap
+mag_worldwide= worldwide$mag
+cor.test(gap_worldwide, mag_worldwide)
+```
+We can see there is a correlation between gap and magnitude.   
+
+Now we will check if the mean number of deaths in a earthquake and a tsunami is the same:
+```{r}
+Tsunami <- disaster %>% filter(FLAG_TSUNAMI == "Tsu") %>% select(DEATHS) %>%  as.vector() %>% filter(is.na(DEATHS) == F)
+earthQuake <-Tsunami <- disaster %>% filter(is.na(FLAG_TSUNAMI) == T) %>% select(DEATHS) %>%  as.vector() %>% filter(is.na(DEATHS) == F) 
+p = data.frame(Tsunami = Tsunami$DEATHS, earthQuake = earthQuake$DEATHS)
+aov (Tsunami ~ earthQuake, data = p) -> q
+summary(q)
+```
+According to the P-value, we can say the means of deaths of earthquakes and Tsunamies are different.      
+
+
+And now we will see if there is a relation between magnitude and its error:
+```{r}
+err_worldwide = worldwide$magError
+mag_worldwide= worldwide$mag
+cor.test(err_worldwide, mag_worldwide)
+```
+And as we can see, there is a relation between these two parameters.
+
+
+***
+
+

@@ -1,0 +1,210 @@
+---
+title: "Association rules"
+subtitle: "Movie recommender systems"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/rs_cover.jpg"  align = 'center'>
+</div>
+
+> <p dir="RTL"> 
+با استفاده از داده نظرهای فیلم به سوالات زیر پاسخ دهید.
+</p>
+
+
+
+***
+
+<p dir="RTL">
+```{r}
+library(ggplot2)
+library(dplyr)
+list.files("G:/Software/R-3.1.1/library/dismo/ex") 
+movies <- read.table("C:\\Users\\hoco\\Desktop\\data analysis\\hw_12\\hw_12\\data\\movies.dat", sep = "~", encoding="UTF-8",  quote = "")
+colnames(movies) <- c("MovieID","Title","Genres")
+ratings <- read.table("C:\\Users\\hoco\\Desktop\\data analysis\\hw_12\\hw_12\\data\\ratings.dat", sep = ":") %>% select(V1, V3, V5, V7)
+colnames(ratings) <- c("UserID","MovieID","Rating","Timestamp")
+View(ratings)
+```
+1.
+```{r}
+ratings %>% group_by(MovieID) %>% summarise(score = mean(Rating), tedad = n(), sum_score = sum(Rating)) %>%  arrange(MovieID)-> rating1
+movies1 <- merge(rating1, movies, by = "MovieID")
+```
+So the movie with the highest score is:
+```{r}
+movies1 %>% arrange(-score, -tedad) %>% slice(1:1) %>% print()
+```
+The most hated movie is:
+```{r}
+movies1 %>% arrange(score, -tedad) %>% slice(1:1) %>% print()
+```
+Number of movies:
+```{r}
+library(stringr)
+movies1 %>% rowwise() %>% mutate( year = unlist(str_split(Title, "\\(")) %>% tail(n = 1) %>% str_split("\\)") %>% unlist() %>% head(n = 1) ) -> movies1
+movies1 %>% group_by(year) %>% summarise(number_of_movies = n()) %>% print()
+```
+
+```{r}
+movies2 <- movies1
+genres = c(
+"Action",
+"Adventure",
+"Animation",
+"Comedy",
+"Crime",
+"Documentary",
+"Drama",
+"Fantasy",
+"Film-Noir",
+"Horror",
+"Musical",
+"Mystery",
+"Romance",
+"Sci-Fi",
+"Thriller",
+"War",
+"Western")
+
+for (genre in genres){
+   movies1 %>% rowwise() %>% mutate(tmpp = str_count(Genres, genre)) -> tmp
+   movies2[, paste0("", genre)] <- tmp$tmpp
+}
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+2.
+```{r}
+
+tedad = c()
+
+for (genre in genres){
+  tmp = movies2[,paste0("", genre)] %>% sum
+  tedad = c(tedad, tmp)
+}
+
+tedad = data.frame(genres = genres, tedad = tedad) %>% arrange(tedad)
+View(tedad)
+tedad %>% ggplot() + geom_bar(aes(x = reorder(genres, tedad), y = tedad), stat = "identity") + theme(axis.text.x = element_text(angle = 90))
+
+mean_score = c()
+for (genre in genres){
+  movies2[movies2[,paste0("", genre)]==1,] %>% select(sum_score) %>% as.vector() %>% sum() -> tmp
+   movies2[movies2[,paste0("", genre)]==1,] %>% select(tedad) %>% as.vector() %>% sum() -> tmp1
+  mean_score = c(mean_score, tmp/tmp1)
+}
+
+mean_score = data.frame(genres = genres, mean_score = mean_score)
+mean_score %>% ggplot() + geom_bar(aes(x = reorder(genres, mean_score), y = mean_score), stat = "identity") + theme(axis.text.x = element_text(angle = 90))
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+3.
+```{r}
+library(tidytext)
+library(tm)
+movies %>% rowwise() %>% mutate(name = unlist(str_split(Title, "\\("))[1]) %>% select(name) %>% as.vector() -> data3
+View(data3)
+data3 %>% str_split("\\s") %>% unlist() %>%  str_replace_all("\"","") %>% 
+    str_replace_all("[[:punct:]]","") %>% table() %>% as.data.frame(stringsAsFactors = F) -> data3
+
+colnames(data3) = c("word", "count")
+View(data3)
+ data3 = data3 %>%
+    filter(!str_to_lower(word) %in% stopwords()) %>% 
+    filter(str_length(word)>1) %>% 
+    filter(!str_detect(word,"\\d")) %>%
+    arrange(desc(count))
+library(wordcloud2)
+library(wordcloud)
+wordcloud2(data = head(data3, 200), size = 0.5)
+
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+4.
+</p>
+
+* Castle in the Sky (1986)
+* Cast Away (2000)
+* No Country for Old Men (2007)
+* Memento (2000)
+
+***
+
+<p dir="RTL">
+5.
+https://github.com/alimfaraji/dataAnalysisCourse
+</p>
+
+***
+
+<p dir="RTL">
+6.
+1. Using R instead of Python.   
+2. The` great number of exercises that sometimes make students exhausted.   
+3. The constraint that the project should be done alone.    
+4. The broad number of subjects that the course covers.     
+5. Class starts very early.     
+6. Slides were not self-explanatory. 
+</p>
+
+***
+
+<p dir="RTL">
+7.
+1. Using Python instead of R.
+2. Reduce number of exercises.
+3. Allowing students to work in groups for their project.
+4. Reduce number of subjects that the course covers for a deeper learning.
+5. 3:00 P.M. - 5:00 P.M. is a better time for class. 
+</p>
+
+
+***
+
+<p dir="RTL">
+8.
+1. Analysis of social networks and its structures.     
+2. Contextualization.    
+3. Natural language processing. 
+</p>
+
+***
+
+<p dir="RTL"> 
+9.   
+1. Our own telegram chats.   
+2. Bitcoin blockchain (or other blockchains).   
+3. Dataset of images of celebrities's face's (like https://www.kaggle.com/jessicali9530/celeba-dataset).
+</p>
+
+***
+
+<p dir="RTL"> 
+10.
+1. PCM and factor analysis were interesting. The idea behind them was really fascinating.   
+2. Learned to code without fully understand the theory behind them (I think sometimes this ability can be useful).
+3. Learned what information we can extract from raw data. The exercises were helpful with its wide questions.   4
+4. The idea of hypothesis test was novel to me. 
+</p>
+

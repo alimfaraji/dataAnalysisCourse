@@ -1,0 +1,419 @@
+---
+title: "Cluster Analysis"
+subtitle: "WDI Indicators"
+author: "Ali Mohammad Faraji"
+date: "`r Sys.time()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+<div align="center">
+<img  src="images/best_hans_talks_1200x627.jpg"  align = 'center'>
+</div>
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(highcharter)
+data = read.csv("data\\WDIData.csv")
+```
+
+
+> <p dir="RTL"> 
+با توجه به داده بانک جهانی به سوالات زیر پاسخ دهید. برای استفاده از داده از سه فایل زیر استفاده نمایید.
+داده نام کشورها: WDICountry
+داده نام سری های زمانی: WDISeries
+داده کل: WDIData
+در صورتی که داده را در اختیار ندارید می توانید از بسته WDI استفاده نموده و داده های مورد نظر را استخراج نمایید.
+</p>
+
+***
+
+<p dir="LTR">
+1.
+```{r}
+#NY.ADJ.NNTY.PC.CD : Adjusted net national income per capita(current US$)
+#SI.POV.DDAY    : Poverty headcount ratio at $1.90 a day (2011 PPP) (% of population)
+#SP.DYN.LE00.IN : Life expectancy at birth, total (years)
+#SI.POV.NAHC    : Poverty headcount ratio at national poverty lines (% of population)
+data %>% filter(Indicator.Code %in% c("NY.ADJ.NNTY.PC.CD","SI.POV.DDAY", "SI.POV.NAHC", "SP.DYN.LE00.IN"))%>% select(X2016, �..Country.Name, Country.Code, Indicator.Code) %>% spread(Indicator.Code, X2016) %>% arrange(NY.ADJ.NNTY.PC.CD) %>% slice(1:10) %>% rowwise() %>%  mutate(dailyIncome = as.numeric(NY.ADJ.NNTY.PC.CD)/365) -> tenPoorCountries
+print(tenPoorCountries)
+tenPoorCountries %>% ggplot() + geom_bar(aes(x = reorder(�..Country.Name, NY.ADJ.NNTY.PC.CD), y = dailyIncome), stat = "identity") + theme_minimal() + labs(title = "Daily income")
+tenPoorCountries %>% ggplot() + geom_bar(aes(x = reorder(Country.Code, NY.ADJ.NNTY.PC.CD), y = SP.DYN.LE00.IN), stat = "identity") + theme_minimal() + labs(title = "Life Expectancy")
+```
+
+</p>
+
+***
+
+<p dir="LTR">
+2.
+```{r}
+data %>% filter(Indicator.Code == "SP.DYN.LE00.IN" ) %>% select(Country.Code, X1960:X2016) %>% gather(key = "year", value = "lifeExpectancy", X1960:X2016) -> ans2
+ ggplot(NULL, aes(x = year, y = lifeExpectancy)) + geom_boxplot(data = ans2) + geom_line(data = ans2 %>% filter(Country.Code == "RWA"), color = "red", group = 1) + labs(title = "Life Expectancy") + coord_flip()
+```
+There was a major descend in life expectancy in Rwanda from 1990 to 1996. There was a genocide in 1993 which caused life expectancy for a country to descend to its minimum  after 1981. During the genocide, it is estimated that 500000 to 1000000 Rwandas were killed. 
+</p>
+
+***
+
+<p dir="RTL">
+3.
+```{r}
+data %>% filter(Indicator.Code %in% c("SP.DYN.LE00.IN", "SH.XPD.CHEX.PC.CD") ) %>% select(Country.Code, Indicator.Code,X2015) %>% spread(Indicator.Code, X2015) -> ans3
+ans3 %>% ggplot(aes(x = reorder(Country.Code, SP.DYN.LE00.IN), y = SP.DYN.LE00.IN)) + geom_line(group = 1) + labs (title = "Life Expectancy", x = "countries", y = "life expectancy in years")
+ans3 %>% ggplot(aes(x = reorder(Country.Code, SP.DYN.LE00.IN), y = SH.XPD.CHEX.PC.CD)) + geom_line(group = 1) + labs (title = "Health expenditure per capita", x = "countries", y = "$") + geom_point(color = "green")
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+4.
+
+```{r}
+# NE.CON.PRVT.PC.KD is Household final consumption expenditure per capita (constant 2010 US$)
+data %>% filter(Country.Code == "IRN") %>% filter(Indicator.Code %in% c("NE.CON.PRVT.PC.KD")) %>% gather(key = "year", value = "value", X1960:X2017) %>% ggplot(aes(x = year, y = value)) + geom_line(color = "green", group = 1) + geom_point(color = "red") + theme(axis.text.x = element_text(angle = 90))
+
+```
+
+</p>
+
+
+***
+
+<p dir="RTL">
+5.
+```{r}
+
+shakhess = c("Expense (% of GDP)",
+             "Foreign direct investment, net inflows (BoP, current US$)",
+             "GDP growth (annual %)",
+             "GDP per capita growth (annual %)",
+             "GNI per capita, Atlas method (current US$)",
+             "GNI, Atlas method (current US$)",
+             "Gross savings (% of GDP)",
+             "Industry, value added (% of GDP)",
+             "Inflation, consumer prices (annual %)",
+             "Net ODA received per capita (current US$)",
+             "Services, etc., value added (% of GDP)",
+             "Agriculture, value added (% of GDP)",
+             "Charges for the use of intellectual property, payments (BoP, current US$)",
+             "Current account balance (BoP, current US$)",
+             "Exports of goods and services (% of GDP)",
+             "External debt stocks, total (DOD, current US$)",
+             "GDP (current US$)",
+             "GDP per capita (current US$)",
+             "GDP per capita, PPP (current international $)",
+             "GNI per capita, PPP (current international $)"
+             )
+data %>% filter(�..Country.Name %in% c("World", "Iran, Islamic Rep.")) %>% filter(Indicator.Name %in% shakhess) %>% arrange(Indicator.Name) -> eghtesadi
+for (textt in shakhess){
+  eghtesadi %>% filter(Indicator.Name == textt) %>% gather(key = "year", value = "val", X1960:X2017) %>% hchart(type = "line", hcaes(x = year, y = val, group = �..Country.Name)) %>% hc_title(text = textt) -> tmp
+  print(tmp)
+}
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+6.
+```{r}
+data %>% filter(Indicator.Name %in% shakhess) -> tmp
+tmp$meann <- rowMeans(tmp %>% select(-Indicator.Name, -Indicator.Code, -Country.Code, -�..Country.Name) ,na.rm = T)
+tmp <- tmp %>% select(�..Country.Name , Indicator.Name , meann)
+tmp <- tmp[complete.cases(tmp) , ] %>% spread(key = Indicator.Name, value = meann)
+tmp1 <- scale(tmp %>% select(-�..Country.Name) , center = F , scale = T)
+rownames(tmp1) <- tmp$�..Country.Name
+
+tmp1[is.na(tmp1)] <- mean(tmp1, na.rm = T)
+#tmp2 <- tmp1[, colSums(is.na(tmp1)) != nrow(tmp1)]
+#View(tmp2)
+#tmp2[is.na(tmp2)] <- 0
+controlCounts <- c("Europe & Central Asia" , "European Union","High income" ,"IBRD only" , 
+                   "IDA & IBRD total" , "Low & middle income" , "Middle income" , "OECD members" , 
+                   "Post-demographic dividend" , "World", "Low income", "IDA total","Upper middle income" , "Small states" ,  "IDA only" ,  "IDA blend" ,  "Heavily indebted poor countries (HIPC)", "Lower middle income" )
+tmp1 <- tmp1[!(rownames(tmp1 ) %in% controlCounts),]
+
+clusts <- kmeans(tmp1 , centers = 3)
+clusts$cluster["Iran, Islamic Rep."]
+names(clusts$cluster[clusts$cluster == 1])
+names(clusts$cluster[clusts$cluster == 2])
+names(clusts$cluster[clusts$cluster == 3])
+```
+As we can see, Iran is more like Aferican and South American countries.
+
+</p>
+
+***
+
+<p dir="RTL">
+7.
+```{r}
+ttt <- t(tmp1)
+b = data.frame(prcomp(ttt)$rotation)
+b$cl <- clusts$cluster
+ggplot(b) + geom_point(aes(x = PC1, y = PC2, color = cl))
+```
+
+</p>
+
+***
+
+<p dir="RTL">
+8.
+</p>
+
+***
+
+<p dir="RTL"> 
+9.
+```{r}
+shakhess = c("Adolescent fertility rate (births per 1,000 women ages 15-19)",
+             "Birth rate, crude (per 1,000 people)",
+             "Age dependency ratio (% of working-age population)",
+             "Death rate, crude (per 1,000 people)",
+             "Fertility rate, total (births per woman)",
+             "Immunization, DPT (% of children ages 12-23 months)",
+             "Immunization, measles (% of children ages 12-23 months)",
+             "Incidence of tuberculosis (per 100,000 people)",
+             "International migrant stock, total",
+             "Life expectancy at birth, female (years)",
+             "Life expectancy at birth, male (years)",
+             "Life expectancy at birth, total (years)",
+             "Maternal mortality ratio (modeled estimate, per 100,000 live births)",
+             "Mortality rate, infant (per 1,000 live births)",
+             "Mortality rate, neonatal (per 1,000 live births)",
+             "Mortality rate, under-5 (per 1,000 live births)",
+             "Net migration",
+             "Population ages 0-14 (% of total)",
+             "Population ages 15-64 (% of total)",
+             "Population ages 65 and above (% of total)"
+             )
+
+#Q5
+data %>% filter(�..Country.Name %in% c("World", "Iran, Islamic Rep.")) %>% filter(Indicator.Name %in% shakhess) %>% arrange(Indicator.Name) -> eghtesadi
+for (textt in shakhess){
+  eghtesadi %>% filter(Indicator.Name == textt) %>% gather(key = "year", value = "val", X1960:X2017) %>% hchart(type = "line", hcaes(x = year, y = val, group = �..Country.Name)) %>% hc_title(text = textt) -> tmp
+  print(tmp)
+}
+
+#Q6
+data %>% filter(Indicator.Name %in% shakhess) -> tmp
+tmp$meann <- rowMeans(tmp %>% select(-Indicator.Name, -Indicator.Code, -Country.Code, -�..Country.Name) ,na.rm = T)
+tmp <- tmp %>% select(�..Country.Name , Indicator.Name , meann)
+tmp <- tmp[complete.cases(tmp) , ] %>% spread(key = Indicator.Name, value = meann)
+tmp1 <- scale(tmp %>% select(-�..Country.Name) , center = F , scale = T)
+rownames(tmp1) <- tmp$�..Country.Name
+
+tmp1[is.na(tmp1)] <- mean(tmp1, na.rm = T)
+#tmp2 <- tmp1[, colSums(is.na(tmp1)) != nrow(tmp1)]
+#View(tmp2)
+#tmp2[is.na(tmp2)] <- 0
+controlCounts <- c("Europe & Central Asia" , "European Union","High income" ,"IBRD only" , 
+                   "IDA & IBRD total" , "Low & middle income" , "Middle income" , "OECD members" , 
+                   "Post-demographic dividend" , "World", "Low income", "IDA total","Upper middle income" , "Small states" ,  "IDA only" ,  "IDA blend" ,  "Heavily indebted poor countries (HIPC)", "Lower middle income" )
+tmp1 <- tmp1[!(rownames(tmp1 ) %in% controlCounts),]
+
+clusts <- kmeans(tmp1 , centers = 3)
+clusts$cluster["Iran, Islamic Rep."]
+names(clusts$cluster[clusts$cluster == 1])
+names(clusts$cluster[clusts$cluster == 2])
+names(clusts$cluster[clusts$cluster == 3])
+
+#Q7
+ttt <- t(tmp1)
+b = data.frame(prcomp(ttt)$rotation)
+b$cl <- clusts$cluster
+ggplot(b) + geom_point(aes(x = PC1, y = PC2, color = cl))
+
+
+
+shakhess = c("Children out of school, primary, female",
+             "Children out of school, primary, male",
+             "Government expenditure on education, total (% of GDP)",
+             "Government expenditure on education, total (% of government expenditure)",
+             "Gross intake ratio in first grade of primary education, female (% of relevant age group)",
+             "Gross intake ratio in first grade of primary education, male (% of relevant age group)",
+             "Labor force, female (% of total labor force)",
+             "Labor force, total",
+             "Literacy rate, youth male (% of males ages 15-24)",
+             "Literacy rate, youth total (% of people ages 15-24)",
+             "Persistence to last grade of primary, female (% of cohort)",
+             "Persistence to last grade of primary, male (% of cohort)",
+             "Population ages 0-14 (% of total)",
+             "Population ages 15-64 (% of total)",
+             "Primary completion rate, female (% of relevant age group)",
+             "Primary completion rate, male (% of relevant age group)",
+             "Primary completion rate, total (% of relevant age group)",
+             "Progression to secondary school, female (%)",
+             "Progression to secondary school, male (%)",
+             "Pupil-teacher ratio, primary"
+             )
+#Q5
+data %>% filter(�..Country.Name %in% c("World", "Iran, Islamic Rep.")) %>% filter(Indicator.Name %in% shakhess) %>% arrange(Indicator.Name) -> eghtesadi
+for (textt in shakhess){
+  eghtesadi %>% filter(Indicator.Name == textt) %>% gather(key = "year", value = "val", X1960:X2017) %>% hchart(type = "line", hcaes(x = year, y = val, group = �..Country.Name)) %>% hc_title(text = textt) -> tmp
+  print(tmp)
+}
+
+#Q6
+data %>% filter(Indicator.Name %in% shakhess) -> tmp
+tmp$meann <- rowMeans(tmp %>% select(-Indicator.Name, -Indicator.Code, -Country.Code, -�..Country.Name) ,na.rm = T)
+tmp <- tmp %>% select(�..Country.Name , Indicator.Name , meann)
+tmp <- tmp[complete.cases(tmp) , ] %>% spread(key = Indicator.Name, value = meann)
+tmp1 <- scale(tmp %>% select(-�..Country.Name) , center = F , scale = T)
+rownames(tmp1) <- tmp$�..Country.Name
+
+tmp1[is.na(tmp1)] <- mean(tmp1, na.rm = T)
+#tmp2 <- tmp1[, colSums(is.na(tmp1)) != nrow(tmp1)]
+#View(tmp2)
+#tmp2[is.na(tmp2)] <- 0
+controlCounts <- c("Europe & Central Asia" , "European Union","High income" ,"IBRD only" , 
+                   "IDA & IBRD total" , "Low & middle income" , "Middle income" , "OECD members" , 
+                   "Post-demographic dividend" , "World", "Low income", "IDA total","Upper middle income" , "Small states" ,  "IDA only" ,  "IDA blend" ,  "Heavily indebted poor countries (HIPC)", "Lower middle income" )
+tmp1 <- tmp1[!(rownames(tmp1 ) %in% controlCounts),]
+
+clusts <- kmeans(tmp1 , centers = 3)
+clusts$cluster["Iran, Islamic Rep."]
+names(clusts$cluster[clusts$cluster == 1])
+names(clusts$cluster[clusts$cluster == 2])
+names(clusts$cluster[clusts$cluster == 3])
+
+#Q7
+ttt <- t(tmp1)
+b = data.frame(prcomp(ttt)$rotation)
+b$cl <- clusts$cluster
+ggplot(b) + geom_point(aes(x = PC1, y = PC2, color = cl))
+
+```
+
+</p>
+
+***
+
+<p dir="RTL"> 
+10.
+```{r}
+
+shakhess = c("Expense (% of GDP)",
+             "Foreign direct investment, net inflows (BoP, current US$)",
+             "GDP growth (annual %)",
+             "GDP per capita growth (annual %)",
+             "GNI per capita, Atlas method (current US$)",
+             "GNI, Atlas method (current US$)",
+             "Gross savings (% of GDP)",
+             "Industry, value added (% of GDP)",
+             "Inflation, consumer prices (annual %)",
+             "Net ODA received per capita (current US$)",
+             "Services, etc., value added (% of GDP)",
+             "Agriculture, value added (% of GDP)",
+             "Charges for the use of intellectual property, payments (BoP, current US$)",
+             "Current account balance (BoP, current US$)",
+             "Exports of goods and services (% of GDP)",
+             "External debt stocks, total (DOD, current US$)",
+             "GDP (current US$)",
+             "GDP per capita (current US$)",
+             "GDP per capita, PPP (current international $)",
+             "GNI per capita, PPP (current international $)",
+             "Adolescent fertility rate (births per 1,000 women ages 15-19)",
+             "Birth rate, crude (per 1,000 people)",
+             "Age dependency ratio (% of working-age population)",
+             "Death rate, crude (per 1,000 people)",
+             "Fertility rate, total (births per woman)",
+             "Immunization, DPT (% of children ages 12-23 months)",
+             "Immunization, measles (% of children ages 12-23 months)",
+             "Incidence of tuberculosis (per 100,000 people)",
+             "International migrant stock, total",
+             "Life expectancy at birth, female (years)",
+             "Life expectancy at birth, male (years)",
+             "Life expectancy at birth, total (years)",
+             "Maternal mortality ratio (modeled estimate, per 100,000 live births)",
+             "Mortality rate, infant (per 1,000 live births)",
+             "Mortality rate, neonatal (per 1,000 live births)",
+             "Mortality rate, under-5 (per 1,000 live births)",
+             "Net migration",
+             "Population ages 0-14 (% of total)",
+             "Population ages 15-64 (% of total)",
+             "Population ages 65 and above (% of total)",
+             "Children out of school, primary, female",
+             "Children out of school, primary, male",
+             "Government expenditure on education, total (% of GDP)",
+             "Government expenditure on education, total (% of government expenditure)",
+             "Gross intake ratio in first grade of primary education, female (% of relevant age group)",
+             "Gross intake ratio in first grade of primary education, male (% of relevant age group)",
+             "Labor force, female (% of total labor force)",
+             "Labor force, total",
+             "Literacy rate, youth male (% of males ages 15-24)",
+             "Literacy rate, youth total (% of people ages 15-24)",
+             "Persistence to last grade of primary, female (% of cohort)",
+             "Persistence to last grade of primary, male (% of cohort)",
+             "Population ages 0-14 (% of total)",
+             "Population ages 15-64 (% of total)",
+             "Primary completion rate, female (% of relevant age group)",
+             "Primary completion rate, male (% of relevant age group)",
+             "Primary completion rate, total (% of relevant age group)",
+             "Progression to secondary school, female (%)",
+             "Progression to secondary school, male (%)",
+             "Pupil-teacher ratio, primary"
+             
+             )
+data %>% filter(Indicator.Name %in% shakhess) -> all_countries
+all_countries$meann <- rowMeans(all_countries %>% select(X1960:X2017) ,na.rm = T)
+all_countries %>% select(Country.Code, meann, Indicator.Code) %>% spread(Indicator.Code, meann) -> all_countries
+
+all_countries <- as.matrix(all_countries)
+all_countries[is.nan(all_countries)]<- 0
+all_countries[is.na(all_countries)]<- 0
+dist = stats::dist(all_countries,method = "euclidean")
+clus = hclust(dist,method = "complete")
+{plot(clus,hang = -1)
+rect.hclust(clus, 3)}
+```
+
+</p>
+
+
+***
+
+<p dir="RTL"> 
+10.
+first, we'll see if there is a correlation between income equality (GINI index) and GDP:
+```{r}
+data %>% select(Country.Code, X1960:X2017, Indicator.Name) %>% filter(Indicator.Name %in% c("GDP (current US$)", "GINI index (World Bank estimate)")) %>% gather(key = "year", value = "val", X1960:X2017) %>% spread(Indicator.Name, val) -> data10.1
+data10.1$`GDP (current US$)`[is.na(data10.1$`GDP (current US$)`)] <- -1
+data10.1$`GINI index (World Bank estimate)`[is.na(data10.1$`GINI index (World Bank estimate)`)] <- -1
+data10.1 %>% filter(`GDP (current US$)` > -1) %>% filter(`GINI index (World Bank estimate)` > -1) -> data10.1
+
+cor.test(data10.1$`GDP (current US$)`, data10.1$`GINI index (World Bank estimate)`)
+```
+We can see the P-value is very low. So there is a correlation between GDP and GINI Index.   
+
+Now we want to see if there is a relation between population of a country and its GINI Index.
+```{r}
+data %>% select(Country.Code, X1960:X2017, Indicator.Name) %>% filter(Indicator.Name %in% c("Population, total", "GINI index (World Bank estimate)")) %>% gather(key = "year", value = "val", X1960:X2017) %>% spread(Indicator.Name, val) -> data10.2
+data10.2$`Population, total`[is.na(data10.2$`Population, total`)] <- -1
+data10.2$`GINI index (World Bank estimate)`[is.na(data10.2$`GINI index (World Bank estimate)`)] <- -1
+data10.2 %>% filter(`Population, total` > -1) %>% filter(`GINI index (World Bank estimate)` > -1) -> data10.2
+
+cor.test(data10.2$`Population, total`, data10.2$`GINI index (World Bank estimate)`)
+```
+P-value is still very low. So there is also a correlation between population of a country and its state of being equal.    
+
+Now we will check if there is a correlation between labor force and GDP:
+```{r}
+data %>% select(Country.Code, X1960:X2017, Indicator.Name) %>% filter(Indicator.Name %in% c("GDP (current US$)", "Labor force, total")) %>% gather(key = "year", value = "val", X1960:X2017) %>% spread(Indicator.Name, val) -> data10.3
+data10.3$`GDP (current US$)`[is.na(data10.3$`GDP (current US$)`)] <- -1
+data10.3$`Labor force, total`[is.na(data10.3$`Labor force, total`)] <- -1
+data10.3 %>% filter(`GDP (current US$)` > -1) %>% filter(`Labor force, total` > -1) -> data10.3
+
+cor.test(data10.3$`GDP (current US$)`, data10.3$`Labor force, total`)
+```
+P-value is very low. There is correlation between these two factors (As we can expect). 
+</p>
